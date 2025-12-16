@@ -9,7 +9,7 @@ const feedArray = [
     likeList: [{ userId: 'User0076934' }],
     commentList: [],
     shares: 0,
-    topics: ['impactfactor::0.0', 'fm::安寧緩和醫療'],
+    topics: ['impactfactor::點擊分析', 'fm::安寧緩和醫療'],
   },
   {
     publisherId: 'User0000003',
@@ -38,7 +38,7 @@ const feedArray = [
     likeList: [{ userId: 'User0163532' }],
     commentList: [],
     shares: 0,
-    topics: ['impactfactor::0.0', 'fm::老年醫學'],
+    topics: ['impactfactor::點擊分析', 'fm::老年醫學'],
   },
 ];
 
