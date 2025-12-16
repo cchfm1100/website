@@ -109,14 +109,6 @@ const feedArray = [
  {publisherId:'User0000014',title:'108. Dummy variable (洪弘)',datetime:'2025-04-23 00:00:00',caption:'',yt:'Bz40hpIkMmo',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
  {publisherId:'User0000014',title:'109. ANOVA (洪弘)',datetime:'2025-04-24 00:00:00',caption:'',yt:'yItd5lTe0Jg',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
  {publisherId:'User0000014',title:'110. 單元小結 (洪弘)',datetime:'2025-04-25 00:00:00',caption:'',yt:'rGO0Wj_mjkc',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-04-26 00:00:00',caption:'',yt:'_foQ1CeHy3c',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-04-27 00:00:00',caption:'',yt:'ugV-AX2lmNs',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-04-28 00:00:00',caption:'',yt:'jWa6WriDuGw',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-04-29 00:00:00',caption:'',yt:'9dyG0OtQNqE',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-04-30 00:00:00',caption:'',yt:'WGXqRxJe3qY',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-05-01 00:00:00',caption:'',yt:'SDqP-vBawog',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-05-02 00:00:00',caption:'',yt:'HIrh1gynOyc',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
- {publisherId:'User0000014',title:'[Private video]',datetime:'2025-05-03 00:00:00',caption:'',yt:'2FLkGmN9tCg',likeList:[],commentList:[],shares:0,topics:['impactfactor::點擊分析','fm::RAKEL Textbook of Family Medicine']},
 ];
 
 if (typeof normalizeFeedArray === 'function') {
