@@ -16,7 +16,7 @@ const feedArray = [
     title: '2026年忘年會 •',
     datetime: '2025-01-31 08:00:00',
     caption: '',
-    yt: U.YT_ID,
+    yt: 'ZLO1o6NXi58',
     likeList: [{ userId: 'User0000002' }],
     commentList: [
       {
