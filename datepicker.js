@@ -386,7 +386,6 @@
       var need=readNeed();
     }
 
-    // === Lunar day label (農曆日：初一/十五/廿三...) ===
     var __dcLunarFmt=null;
     try{ __dcLunarFmt=new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{day:'numeric'}); }catch(_e){}
     var __dcLunarDayName=['',
@@ -446,7 +445,6 @@
       else badge.classList.add('is-zero');
       dayElem.appendChild(badge);
 
-      // add lunar day label under the date (e.g. 初一 / 十五)
       var lunarTxt=__dcGetLunarDayLabel(dayElem.dateObj);
       if(lunarTxt){
         var lunar=document.createElement('small');
