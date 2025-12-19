@@ -1,6 +1,6 @@
 const feedArray = [
   {
-    publisherId: 'User0000004',
+    publisherId: 'User0000005',
     title: '病人自主權利法與醫病溝通模式 •',
     datetime: '2025-08-08 08:00:00',
     caption:
@@ -12,12 +12,12 @@ const feedArray = [
     topics: ['impactfactor::點擊分析', 'fm::安寧緩和醫療'],
   },
   {
-    publisherId: 'User0000003',
+    publisherId: 'User0000004',
     title: '2026年忘年會 •',
     datetime: '2025-01-31 08:00:00',
     caption: '',
     yt: 'ZLO1o6NXi58',
-    likeList: [{ userId: 'User0000002' }],
+    likeList: [{ userId: 'User0000001' }],
     commentList: [
       {
         userId: 'User0000003',
@@ -29,7 +29,7 @@ const feedArray = [
     topics: ['life::活動'],
   },
   {
-    publisherId: 'User0000004',
+    publisherId: 'User0000005',
     title: '老人失智、衰老及肌少症 •',
     datetime: '2025-01-21 08:00:00',
     caption:
