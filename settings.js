@@ -236,7 +236,7 @@ const QUICK_LINKS = {
     "PGY/UGY": [{
         title: "外訓Orientation",
         desc: "家醫、安寧病房、健檢疫苗介紹",
-        icon: "1026/1026658",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/1026658.png",
         url: "https://cchtw-my.sharepoint.com/:f:/g/personal/d1100_cch_org_tw/ElDAVO3YQDFBpUQXPPmlgQsBJmsKZqgWOoQb-2FNDGbKjw?e=l3KUao"
     },
     {
