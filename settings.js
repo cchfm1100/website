@@ -242,19 +242,19 @@ const QUICK_LINKS = {
     {
         title: "PGY筆試",
         desc: "PGY筆試前測、後測",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://forms.office.com/r/4cy3CZrvCT"
     },
     {
         title: "UGY筆試",
         desc: "UGY筆試前測、後測",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://forms.office.com/r/ChbDxZVYnt"
     },
     {
         title: "計算餘藥及天數",
         desc: "診斷書住院天數及回診帶藥計算",
-        icon: "9641/9641509",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9641509.png",
         url: ""
     },
     {
@@ -290,7 +290,7 @@ const QUICK_LINKS = {
     "R/VS": [{
         title: "住院醫師Orientation",
         desc: "住院醫師工作手冊",
-        icon: "1026/1026658",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/1026658.png",
         url: "https://cchtw-my.sharepoint.com/:f:/r/personal/d1100_cch_org_tw/Documents/%E6%95%99%E5%AD%B8CR/R%26PGY%26UGY%E5%85%B1%E4%BA%AB?csf=1&web=1&e=3Xz2XP"
     },
     {
@@ -326,49 +326,49 @@ const QUICK_LINKS = {
     {
         title: "R筆試",
         desc: "住院醫師筆試",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://583124672-atari-embeds.googleusercontent.com/embeds/16cb204cf3a9d4d223a0a3fd8b0eec5d/inner-frame-minified.html"
     },
     {
         title: "R口試",
         desc: "住院醫師口試回饋單",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://forms.office.com/Pages/ResponsePage.aspx?id=ZiQhczznWkacDnaDOViPpsrW0RTK8FlDjhEWVClRMqZUNU5aR1g3WllFUVJUMlY1VENBWTU2SkoxUi4u"
     },
     {
         title: "R口試成績",
         desc: "住院醫師口試成績",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://cchtw-my.sharepoint.com/:x:/r/personal/d1100_cch_org_tw/Documents/%E6%95%99%E5%AD%B8CR/%E7%B6%B2%E9%A0%81%26%E6%88%90%E7%B8%BE/%E5%AE%B6%E5%BA%AD%E6%9A%A8%E7%A4%BE%E5%8D%80%E9%86%AB%E5%AD%B8%E9%83%A8R%E5%8F%A3%E8%A9%9F.xlsx?d=w9dad8e6e46ab4a0ea255f657e3abca79&csf=1&web=1&e=q5NOR2"
     },
     {
         title: "R錄影教學",
         desc: "住院醫師錄影教學回饋單",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://forms.office.com/r/Gdes09Gr2y"
     },
     {
         title: "R原始成績",
         desc: "住院醫師原始成績",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://cchtw-my.sharepoint.com/:x:/r/personal/d1100_cch_org_tw/Documents/%E6%95%99%E5%AD%B8CR/%E7%B6%B2%E9%A0%81%26%E6%88%90%E7%B8%BE/%E5%AE%B6%E5%BA%AD%E6%9A%A8%E7%A4%BE%E5%8D%80%E9%86%AB%E5%AD%B8%E9%83%A8%E9%8C%B4%E5%BD%B1%E6%95%99%E5%AD%B8%E8%A9%95%E4%BC%B0%E8%A1%A8.xlsx?d=wa8342667961c4f3fb20c2c8e3dfa3d5d&csf=1&web=1&e=UlWaat"
     },
     {
         title: "PGY筆試成績",
         desc: "PGY筆試成績",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://cchtw-my.sharepoint.com/:x:/r/personal/d1100_cch_org_tw/Documents/%E6%95%99%E5%AD%B8CR/%E7%B6%B2%E9%A0%81%26%E6%88%90%E7%B8%BE/%E5%AE%B6%E5%BA%AD%E6%9A%A8%E7%A4%BE%E5%8D%80%E9%86%AB%E5%AD%B8%E9%83%A8PGY%E7%AD%BE%E8%A9%9F.xlsx?d=w4f7038aba4ed486a9b78e4383563486d&csf=1&web=1&e=ivNyqX"
     },
     {
         title: "UGY筆試成績",
         desc: "UGY筆試成績",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://cchtw-my.sharepoint.com/:x:/r/personal/d1100_cch_org_tw/Documents/%E6%95%99%E5%AD%B8CR/%E7%B6%B2%E9%A0%81%26%E6%88%90%E7%B8%BE/%E5%AE%B6%E5%BA%AD%E6%9A%A8%E7%A4%BE%E5%8D%80%E9%86%AB%E5%AD%B8%E9%83%A8UGY%E7%AD%BE%E8%A9%9F.xlsx?d=w75b9e02d1bbe4e8aab3f1ec33e2284ad&csf=1&web=1&e=XayekK"
     },
     {
         title: "PGY/UGY EPA",
         desc: "紙本評量電子化",
-        icon: "4838/4838291",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4838291.png",
         url: "https://forms.office.com/r/4EuM1UqyGS"
     }],
     "上傳KM會議記錄": [{
