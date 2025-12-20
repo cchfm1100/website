@@ -5,8 +5,7 @@ const USER_AVATARS = {
   'User0000011':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0000011.png',
   'User0000012':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0000012.png',
   'User0000013':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0000013.png',
-  'User0000014':'https://yt3.googleusercontent.com/OdRmSgsFSfXw_9SDwChQ3DJ6aVpORYKEx8maD5hgnsahseF0u1qeTNu0ZZHjOK0TZPfE_nvL_w=s900-c-k-c0x00ffffff-no-rj',
-
+  'User0000014':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0000014.png',
   'User0144084':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0144084.gif',
   'User0076934':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0076934.gif',
   'User0117152':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0117152.gif',
