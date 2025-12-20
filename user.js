@@ -1,7 +1,7 @@
 const USER_AVATARS = {
   'User0000001':'https://play-lh.googleusercontent.com/ze6oxHvNBhgiAmJ50mHiONYtkAZMPFLwJVaB1kbBIXt52JNae9nB7G0yXX0YJZDHOitp',
   'User0000002':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/2785482.png',
-  'User0000003':'https://cdn-icons-png.flaticon.com/128/6283/6283244.png',
+  'User0000003':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/6283244.png',
   'User0000014':'https://yt3.googleusercontent.com/OdRmSgsFSfXw_9SDwChQ3DJ6aVpORYKEx8maD5hgnsahseF0u1qeTNu0ZZHjOK0TZPfE_nvL_w=s900-c-k-c0x00ffffff-no-rj',
 
   'User0144084':'https://cdn.jsdelivr.net/gh/cchfm1100/website@main/user/User0144084.gif',
