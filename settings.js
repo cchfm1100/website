@@ -45,6 +45,13 @@ default:
 },
 ];
 
+const toy = [
+  "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/toy1.png",
+  "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/toy2.png",
+  "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/toy3.png",
+  "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/toy4.png"
+];
+
 const TOPIC_GROUPS = [{
     id: 'life',
     name: '生活',
@@ -260,31 +267,31 @@ const QUICK_LINKS = {
     {
         title: "E-Portfolio",
         desc: "2 項未完成",
-        icon: "5392/5392393",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/5392393.png",
         url: "https://neweportfolio.cch.org.tw/"
     },
     {
         title: "E-learning",
         desc: "1 項未完成",
-        icon: "3845/3845856",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/3845856.png",
         url: "http://elearning.cch.org.tw/cltcms/ctms.do"
     },
     {
         title: "傳統信箱",
         desc: "彰基舊信箱登入",
-        icon: "2965/2965306",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/2965306.png",
         url: "https://outlook.cch.org.tw/"
     },
     {
         title: "分機查詢",
         desc: "院內公務機查詢",
-        icon: "3014/3014736",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/3014736.png",
         url: "https://dpt.cch.org.tw/cch_mvpn/"
     },
     {
         title: "轉QR code",
         desc: "用AI將網址轉成彰基QR code",
-        icon: "287/287610",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/287610.png",
         url: "https://sites.google.com/view/cchfm/%E9%80%9A%E7%94%A8%E5%8A%9F%E8%83%BD/qrcode"
     }],
     "R/VS": [{
