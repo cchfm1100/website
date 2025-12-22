@@ -303,31 +303,31 @@ const QUICK_LINKS = {
     {
         title: "評鑒相關",
         desc: "住院醫師工時、作業等統計",
-        icon: "11531/11531327",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/11531327.png",
         url: "https://forms.office.com/Pages/ResponsePage.aspx?id=ZiQhczznWkacDnaDOViPpsrW0RTK8FlDjhEWVClRMqZURFFUMzdSMkUwNEsxOFJUSjNINjBEMENYRC4u"
     },
     {
         title: "Emyway",
         desc: "核心能力、EPA、Milestone",
-        icon: "3135/3135800",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/3135800.png",
         url: "https://emyway.jct.org.tw/"
     },
     {
         title: "EIP工時統計",
         desc: "人資系統報備",
-        icon: "2784/2784459",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/2784459.png",
         url: "https://dpt.cch.org.tw/EIP/#/Login"
     },
     {
         title: "同步行事曆",
         desc: "添加行事曆到我的Google Calendar",
-        icon: "3773/3773223",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/3773223.png",
         url: "https://forms.office.com/r/c3DvcSbiqY"
     },
     {
         title: "口試考古題",
         desc: "歷届家專口試考古題",
-        icon: "8776/8776696",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/8776696.png",
         url: "https://sites.google.com/view/cchfm/%E9%80%9A%E7%94%A8%E5%8A%9F%E8%83%BD/quiz"
     },
     {
@@ -381,49 +381,49 @@ const QUICK_LINKS = {
     "上傳KM會議記錄": [{
         title: "晨會",
         desc: "社區醫療群學術研討會暨行政會議、住院醫師座談會、OSCE 臨床技能",
-        icon: "6543/6543839",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/6543839.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=115524"
     },
     {
         title: "臨床研討會",
         desc: "健檢報告解說、門診病歷寫作教學、PEER review",
-        icon: "11513/11513027",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/11513027.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=115525"
     },
     {
         title: "專題討論",
         desc: "外賓演講、Research meeting、安寧讀書會、預防醫學讀書會",
-        icon: "4483/4483350",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/4483350.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=115526"
     },
     {
         title: "以EBM方式進行之期刊閱讀",
         desc: "R EBM style 期刊閱讀",
-        icon: "9110/9110343",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9110343.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3023"
     },
     {
         title: "全人醫療（跨領域）討論會",
         desc: "跨領域個案討論會",
-        icon: "7185/7185630",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/7185630.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3118"
     },
     {
         title: "家庭訪視及居家照護訓練",
         desc: "居家病例討論會",
-        icon: "2163/2163350",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/2163350.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3129"
     },
     {
         title: "核心課程",
         desc: "住院醫師核心課程",
-        icon: "19007/19007864",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/19007864.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3148"
     },
     {
         title: "行為科學訓練",
         desc: "巴林小組、錄影教學",
-        icon: "2205/2205404",
+        icon: "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/2205404.png",
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3175"
     }]
 };
