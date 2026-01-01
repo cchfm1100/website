@@ -387,23 +387,113 @@
     }
 
     var __dcLunarFmt=null;
-    try{ __dcLunarFmt=new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{day:'numeric'}); }catch(_e){}
+    try{ __dcLunarFmt=new Intl.DateTimeFormat('zh-TW-u-ca-chinese',{month:'long',day:'numeric'}); }catch(_e){}
     var __dcLunarDayName=['',
       '初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
       '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
       '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'
     ];
+    var __dcCnDigitMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'兩':2};
+    function __dcCnDigit(c){return __dcCnDigitMap[c]||0}
+    function __dcLunarDayToInt(v){
+      var s=String(v||'').replace(/\s+/g,'').replace(/日$/,'');
+      var m=s.match(/\d+/);
+      if(m) return parseInt(m[0],10);
+      if(!s) return NaN;
+      if(s==='卅'||s==='三十') return 30;
+      if(s==='廿') return 20;
+      if(s==='十') return 10;
+      if(s.slice(0,1)==='初'){
+        var t=s.slice(1);
+        if(t==='十') return 10;
+        var d=__dcCnDigit(t.slice(0,1));
+        return d||NaN;
+      }
+      if(s.slice(0,1)==='十'){
+        var d=__dcCnDigit(s.slice(1,2));
+        return 10+(d||0);
+      }
+      if(s.slice(0,2)==='二十'){
+        var d=__dcCnDigit(s.slice(2,3));
+        return 20+(d||0);
+      }
+      if(s.slice(0,1)==='廿'){
+        var d=__dcCnDigit(s.slice(1,2));
+        return 20+(d||0);
+      }
+      var a=__dcCnDigit(s.slice(0,1));
+      if(a){
+        if(s.slice(1,2)==='十'){
+          var b=__dcCnDigit(s.slice(2,3));
+          return a*10+(b||0);
+        }
+        return a;
+      }
+      return NaN;
+    }
+    function __dcCnMonthNumToText(n){
+      var m=['','正','二','三','四','五','六','七','八','九','十','十一','十二'];
+      return m[n]||String(n);
+    }
+    function __dcNormalizeLunarMonthText(mp){
+      var s=String(mp||'').trim().replace(/\s+/g,'');
+      if(!s) return '';
+      var isLeap=false;
+      if(s.slice(0,1)==='閏'||s.slice(0,1)==='闰'){isLeap=true;s=s.slice(1);}
+      var mm=s.match(/^(\d{1,2})月$/);
+      if(mm){
+        var n=parseInt(mm[1],10);
+        if(Number.isFinite(n)&&n>=1&&n<=12) s=__dcCnMonthNumToText(n)+'月';
+        else s=mm[1]+'月';
+      }else if(/^\d{1,2}$/.test(s)){
+        var n2=parseInt(s,10);
+        if(Number.isFinite(n2)&&n2>=1&&n2<=12) s=__dcCnMonthNumToText(n2)+'月';
+        else s=s+'月';
+      }else if(s.slice(-1)!=='月' && /^\d{1,2}月/.test(s)){
+        s=s;
+      }
+      return (isLeap?'閏':'')+s;
+    }
+    function __dcParseLunarFromFormatted(str){
+      var s=String(str||'').trim().replace(/\s+/g,'');
+      if(!s) return {month:'',day:''};
+      var mi=s.indexOf('月');
+      if(mi>=0){
+        var month=s.slice(0,mi+1);
+        var day=s.slice(mi+1).replace(/日$/,'');
+        return {month:month,day:day};
+      }
+      return {month:'',day:s.replace(/日$/,'')};
+    }
     function __dcGetLunarDayLabel(d){
       if(!__dcLunarFmt) return '';
       try{
-        var parts=__dcLunarFmt.formatToParts(d);
-        var v='';
-        for(var i=0;i<parts.length;i++){ if(parts[i].type==='day'){ v=parts[i].value; break; } }
-        var n=parseInt(v||__dcLunarFmt.format(d),10);
+        var dayPart='';
+        var monthPart='';
+        var parts=null;
+        try{ parts=__dcLunarFmt.formatToParts(d); }catch(_e2){ parts=null; }
+        if(parts){
+          for(var i=0;i<parts.length;i++){
+            if(parts[i].type==='day') dayPart=parts[i].value;
+            else if(parts[i].type==='month') monthPart=parts[i].value;
+          }
+        }
+        if(!dayPart || !monthPart){
+          var parsed=__dcParseLunarFromFormatted(__dcLunarFmt.format(d));
+          if(!monthPart) monthPart=parsed.month;
+          if(!dayPart) dayPart=parsed.day;
+        }
+        var n=__dcLunarDayToInt(dayPart);
         if(!Number.isFinite(n)||n<1||n>30) return '';
-        return __dcLunarDayName[n]||'';
+        var dayName=__dcLunarDayName[n]||'';
+        if(n===1){
+          var mtxt=__dcNormalizeLunarMonthText(monthPart);
+          if(mtxt) return mtxt+dayName;
+        }
+        return dayName;
       }catch(_e){ return ''; }
     }
+
 
     function dayStyler(_dObj,_dStr,dp,dayElem){
       dayElem.classList.remove('med-in-range','med-start','med-out');
@@ -413,7 +503,6 @@
       if(old2) old2.remove();
       var old3=dayElem.querySelector('.dc-lunar');
       if(old3) old3.remove();
-      // wrap solar date number once, so we can place lunar text nicely
       var tn=dayElem.childNodes && dayElem.childNodes[0];
       if(tn && tn.nodeType===3){
         var solar=document.createElement('span');
@@ -423,6 +512,15 @@
         dayElem.removeChild(tn);
       }
       if(!dayElem.dateObj || !(dayElem.dateObj instanceof Date)) return;
+
+      var lunarTxt=__dcGetLunarDayLabel(dayElem.dateObj);
+      if(lunarTxt){
+        var lunar=document.createElement('small');
+        lunar.className='dc-lunar';
+        lunar.textContent=lunarTxt;
+        if(lunarTxt.slice(-2)==='初一' || lunarTxt.slice(-2)==='十五') lunar.classList.add('is-special');
+        dayElem.appendChild(lunar);
+      }
 
       var remain0=readRemain();
       var need=readNeed();
@@ -444,15 +542,6 @@
       else if(delta<0) badge.classList.add('is-in');
       else badge.classList.add('is-zero');
       dayElem.appendChild(badge);
-
-      var lunarTxt=__dcGetLunarDayLabel(dayElem.dateObj);
-      if(lunarTxt){
-        var lunar=document.createElement('small');
-        lunar.className='dc-lunar';
-        lunar.textContent=lunarTxt;
-        if(lunarTxt==='初一' || lunarTxt==='十五') lunar.classList.add('is-special');
-        dayElem.appendChild(lunar);
-      }
     }
 
     function syncSelected(from,to){
@@ -553,5 +642,5 @@
     updateResult();
   }
 
-  window.DCCalendar={init:init,destroy:destroy};
+  window.DCCalendar={init:init,destroy:destroy};window.__DCCALENDAR_VERSION='2026-01-01-1';
 })();
