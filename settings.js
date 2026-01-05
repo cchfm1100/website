@@ -32,6 +32,9 @@ default:
     feeds: [{
         style: [],
         script: [{
+            "feed.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/feed.js?v=20251230133301"
+        },
+        {
             "1100.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/1100.js?v=20251230133301"
         },
         {

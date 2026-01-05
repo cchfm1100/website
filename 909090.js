@@ -1659,7 +1659,3 @@ const feedArray = [{
     shares: 0,
     topics: ['life::旅遊'],
 }];
-
-if (typeof normalizeFeedArray === 'function') {
-    normalizeFeedArray(feedArray);
-}
