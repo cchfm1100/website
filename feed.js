@@ -47,11 +47,10 @@ window.__FEED_JS_LOADED__=1;
 
     var src=new URL(file,location.href).href;
     var raw=getSettingScriptUrl(file);
+    var primary=raw||src;
     iframe.srcdoc='<!doctype html><meta charset="utf-8">'
-      + '<script>var __USED_RAW__=false;</'+'script>'
-      + '<script src="'+src+'"></'+'script>'
-      + (raw?('<script>if(typeof feedArray==="undefined"){__USED_RAW__=true;document.write("<"+"script src=\\"'+raw+'\\\"><\\/script>");}</'+'script>'):'')
-      + '<script>try{parent.postMessage({__src:"'+tag+'",feedArray:feedArray,__usedRaw:__USED_RAW__},"*")}catch(e){parent.postMessage({__src:"'+tag+'",feedArray:[],__usedRaw:__USED_RAW__,err:String(e)},"*")}</'+'script>';
+      + '<script>var __USED_RAW__='+(raw?'true':'false')+';</'+'script>'
+      + '<script src="'+primary+'"></'+'script>'+ '<script>try{parent.postMessage({__src:"'+tag+'",feedArray:feedArray,__usedRaw:__USED_RAW__},"*")}catch(e){parent.postMessage({__src:"'+tag+'",feedArray:[],__usedRaw:__USED_RAW__,err:String(e)},"*")}</'+'script>';
 
     var handler=function(ev){
       if(done)return;
@@ -129,7 +128,7 @@ const USER0144084 = ADV_USERS.find(u=>u.id==='User0144084');
     let tsCounter=0,selectionMode='user',likeAvatarsSelected=[],selectedTopics=[],advCurrentUserId='User0000002',advCurrentUserName='您',advCurrentUserAvatar=(ADV_USERS['User0000002']&&ADV_USERS['User0000002'].avatar)?ADV_USERS['User0000002'].avatar:'';
   const d=document,qs=(s,p=d)=>p.querySelector(s),qsa=(s,p=d)=>[...p.querySelectorAll(s)];
   const TTS_SUPPORTED=typeof window!=='undefined'&&'speechSynthesis'in window&&'SpeechSynthesisUtterance'in window;
-  let expanded=false,mainActionDefaultText='',feedEditState={active:false,item:null,srcFile:'',prevTargetFile:''};let __ADV_BOOTED__=false;function ensureAdvInit(){if(__ADV_BOOTED__)return;__ADV_BOOTED__=true;try{initAdvancedEditor()}catch(e){}try{initFocusToggle()}catch(e){}try{initAdvImageManager()}catch(e){}try{initAdvUsers()}catch(e){}try{initLikeAvatarButton()}catch(e){}try{initTopics()}catch(e){}try{initPosting()}catch(e){}}
+  let expanded=false,mainActionDefaultText='',feedEditState={active:false,item:null,srcFile:'',prevTargetFile:''};let __ADV_BOOTED__=false;function ensureAdvInit(){if(!__ADV_BOOTED__){__ADV_BOOTED__=true;try{initAdvancedEditor()}catch(e){}try{initFocusToggle()}catch(e){}try{initAdvImageManager()}catch(e){}try{initAdvUsers()}catch(e){}try{initLikeAvatarButton()}catch(e){}try{initTopics()}catch(e){}try{initPosting()}catch(e){}}try{initCompactAvatarToggle()}catch(e){}try{updateSelectedAvatarDisplay()}catch(e){}}
   function getTimestamp(a){const s=a!=null?String(a).trim():'';if(!s)return Date.now()+(tsCounter++);const b=Date.parse(s.replace(' ','T'));return isNaN(b)?Date.now()+(tsCounter++):b+(tsCounter++)}
   function initStaticImages(){qs('#avatarGuest').src=ADV_USERS['User0000002'].avatar;qs('#profileLogo').src=ADV_USERS['User0000002'].avatar;qs('#postAvatar').src=ADV_USERS['User0000003'].avatar}
   function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
@@ -933,7 +932,7 @@ const html=`
     }
     return qs('#daysCalcFeed');
   }
-  function showMore(){if(expanded)return;ensureAdvInit();expanded=true;const pp=qs('#profile-pic');if(pp)pp.style.display='none';const cp=qs('#create-post');if(cp)cp.style.display='none';const adv=qs('#advancedEditorWrapper');if(adv)adv.style.display='flex';const dt=qs('#advDate');if(dt&&!dt.value)dt.valueAsDate=new Date}
+  function showMore(){if(expanded)return;ensureAdvInit();try{initCompactAvatarToggle()}catch(e){}try{updateSelectedAvatarDisplay()}catch(e){}expanded=true;const pp=qs('#profile-pic');if(pp)pp.style.display='none';const cp=qs('#create-post');if(cp)cp.style.display='none';const adv=qs('#advancedEditorWrapper');if(adv)adv.style.display='flex';const dt=qs('#advDate');if(dt&&!dt.value)dt.valueAsDate=new Date}
   function hideMore(){if(!expanded||feedEditState.active)return;expanded=false;const pp=qs('#profile-pic');if(pp)pp.style.display='';const cp=qs('#create-post');if(cp)cp.style.display='';const adv=qs('#advancedEditorWrapper');if(adv)adv.style.display=''}
   function initFocusToggle(){if(initFocusToggle._done)return;initFocusToggle._done=true;try{qs('#advYoutube').style.display='none';qs('#advImages').style.display='none';const mgr=qs('#advImageManager');if(mgr)mgr.style.display='flex'}catch(e){}const form=qs('#postForm');const open=()=>{ensureAdvInit();showMore()};document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.id==='create-post')open()},true);const trigger=qs('#create-post');if(trigger&&trigger.dataset.focusBound!=='1'){trigger.dataset.focusBound='1';trigger.addEventListener('focus',open)}document.addEventListener('mousedown',e=>{if(!expanded)return;const t=e.target;if(form&&form.contains(t))return;const f=qs('#advUrlFloatBackdrop');if(f&&f.contains(t))return;const m=qs('#advMediaMenu');if(m&&m.contains(t))return;hideMore()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){const f=qs('#advUrlFloatBackdrop');if(f&&!f.classList.contains('hide'))return;const m=qs('#advMediaMenu');if(m&&m.style.display==='block')return;hideMore();if(trigger)trigger.blur()}})}
 
@@ -1689,7 +1688,7 @@ const html=`
     qs('#clearFormat').addEventListener('click',()=>{const editor=qs('#advEditor');if(!editor)return;const allowed=['P','UL','OL','LI','SPAN','BR','FONT','B','I'];const temp=document.createElement('div');temp.innerHTML=editor.innerHTML;temp.querySelectorAll('*').forEach(n=>{if(n.tagName&&!allowed.includes(n.tagName)){const span=document.createElement('span');while(n.firstChild)span.appendChild(n.firstChild);n.replaceWith(span)}});temp.querySelectorAll('[style]').forEach(el=>{const c=el.style.color;if(c&&c.toLowerCase().replace(/\s+/g,'').includes('rgb(19,19,20)')){el.removeAttribute('style')}});editor.innerHTML=temp.innerHTML})
   }
   qs('#advEditor').addEventListener('paste',function(){setTimeout(()=>qs('#clearFormat').click(),0)});
-  function updateSelectedAvatarDisplay(){const img=qs('#advSelectedAvatarImg');if(img)img.src=(String(advCurrentUserAvatar||'').trim()||_defaultAvatar()||ADV_USERS['User0000002'].avatar)}
+  function updateSelectedAvatarDisplay(){const img=qs('#advSelectedAvatarImg');if(!img)return;let src=String(advCurrentUserAvatar||'').trim()||_defaultAvatar();if(!src){try{const u=ADV_USERS&&ADV_USERS['User0000002'];if(u&&u.avatar)src=String(u.avatar)}catch(e){}}if(src)img.src=src}
   function renderLikeAvatars(){const wrap=qs('#advLikeAvatarList');if(!wrap)return;if(!likeAvatarsSelected.length){wrap.innerHTML='<span style="font-size:.6rem;color:var(--c-text-soft);letter-spacing:.5px;">(尚未選擇)</span>';return}wrap.innerHTML=likeAvatarsSelected.map((a,i)=>`<div class="la-item" data-idx="${i}" title="點按移除"><img src="${a}" alt=""><button type="button" data-remove="${i}">&times;</button></div>`).join('')}
   function renderAdvTopics(){
     const list=qs('#advTopicList');
@@ -1733,7 +1732,7 @@ const html=`
     if(clrBtn)clrBtn.addEventListener('click',()=>{selectedTopics=[];qsa('#advTopicList input[type=checkbox]').forEach(cb=>{cb.checked=false;const label=cb.closest('label');if(label)label.classList.remove('selected')});renderTopicDisplay()});
     document.addEventListener('click',e=>{const btn=e.target.closest('button[data-remove-topic]');if(btn){const key=btn.dataset.removeTopic;selectedTopics=selectedTopics.filter(t=>t!==key);const cb=list.querySelector(`input[type="checkbox"][value="${CSS.escape(key)}"]`);if(cb){cb.checked=false;const label=cb.closest('label');if(label)label.classList.remove('selected')}renderTopicDisplay()}});
   }
-  function initCompactAvatarToggle(){const w=qs('#advancedEditorWrapper'),btn=qs('#advSelectedAvatar');if(btn)btn.addEventListener('click',()=>{selectionMode='user';w.classList.toggle('show-users')})}
+  function initCompactAvatarToggle(){const w=qs('#advancedEditorWrapper'),btn=qs('#advSelectedAvatar');if(!w||!btn)return;if(btn.dataset.compactAvatarBound==='1')return;btn.dataset.compactAvatarBound='1';btn.addEventListener('click',()=>{selectionMode='user';w.classList.toggle('show-users')})}
   function initLikeAvatarButton(){const btn=qs('#addLikeAvatarBtn'),w=qs('#advancedEditorWrapper');if(btn)btn.addEventListener('click',()=>{selectionMode='like';w.classList.add('show-users')});const clr=qs('#clearLikeAvatarBtn');if(clr)clr.addEventListener('click',()=>{likeAvatarsSelected=[];renderLikeAvatars()});document.addEventListener('click',e=>{const rm=e.target.closest('button[data-remove]');if(rm){const idx=+rm.getAttribute('data-remove');likeAvatarsSelected.splice(idx,1);renderLikeAvatars()}})}
   function initAdvUsers(){
     renderAdvUsers();
