@@ -1,3 +1,4 @@
+(function(){try{if(typeof ADV_USERS!=='undefined'&&Array.isArray(ADV_USERS)){for(let i=0;i<ADV_USERS.length;i++){const u=ADV_USERS[i];if(u&&u.id)ADV_USERS[u.id]=u;}}}catch(e){}})();
 const STORIES = [{
     type: 'video',
     yt: 'ZLO1o6NXi58',
@@ -34,3 +35,4 @@ const STORIES = [{
     title: 'e等公務園',
     avatar: ADV_USERS['User0000013'].avatar
 }];
+try{window.STORIES=STORIES;}catch(e){}

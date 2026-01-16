@@ -1,3 +1,4 @@
+window.OSM_MAP_DEFAULT_CENTER=[24.071252388959756,120.5445053776353];window.OSM_MAP_DEFAULT_ZOOM=16;window.OSM_MAP_DATA_FILE=window.OSM_MAP_DATA_FILE||"map1.js";
 const settings = [{
 default:
     [{
@@ -22,6 +23,17 @@ default:
         }],
     },
     ],
+    map: [{
+        style: [],
+        script: [{
+            "map0.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/map0.js?v=20260115120000"
+        },{
+            "map1.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/map1.js?v=20260115120000"
+        },        {
+            "map.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/map.js?v=20260115120000"
+        }],
+    },
+    ],
     stories: [{
         style: [],
         script: [{
@@ -29,12 +41,16 @@ default:
         }],
     },
     ],
-    feeds: [{
+    feed: [{
         style: [],
         script: [{
             "feed.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/feed.js?v=20251230133301"
-        },
-        {
+        }],
+    },
+    ],
+    feeds: [{
+        style: [],
+        script: [        {
             "1100.js": "https://cdn.jsdelivr.net/gh/cchfm1100/website@main/1100.js?v=20251230133301"
         },
         {
@@ -430,3 +446,4 @@ const QUICK_LINKS = {
         url: "https://km.cch.org.tw/km/listfolders.aspx?uid=3175"
     }]
 };
+
