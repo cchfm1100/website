@@ -904,7 +904,7 @@ function openImageLightbox(src, alt){
 const html=`
       <div class="feed fade-slide" id="daysCalcFeed">
         <div class="feed-header">
-          <div class="avatar"><img src="${U.ICON('https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9641509.png?v=20251229224434')}" alt=""></div>
+          <div class="avatar"><img src="${U.ICON('https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9641509.png?v=20260117174326')}" alt=""></div>
           <div class="info">
             <h3>計算餘藥及天數</h3>
           </div>
