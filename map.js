@@ -200,9 +200,11 @@ body.osm-no-scroll #ScrollToy{display:none!important}
 .osm-popup-actions .caption{display:flex;flex-wrap:wrap;gap:.35rem;min-width:0}
 .osm-popup-actions .caption a{white-space:nowrap}
 .osm-popup-feeds{display:flex;align-items:center;gap:.35rem;flex:0 0 auto}
-.osm-popup-avatar{width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid var(--c-bg-alt);background:var(--c-bg-alt);box-shadow:0 4px 12px -6px rgba(0,0,0,.35);padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.osm-popup-avatar{width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid var(--c-bg-alt);background:var(--c-bg-alt);box-shadow:0 4px 12px -6px rgba(0,0,0,.35);padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative}
 .osm-popup-avatar img{width:100%;height:100%;object-fit:cover}
 .osm-popup-avatar:hover{transform:translateY(-1px)}
+.osm-popup-feedcount{height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;border-radius:999px;border:1px solid var(--c-border);background:var(--glass);backdrop-filter:saturate(180%) blur(10px);font-weight:950;font-size:.72rem;letter-spacing:.3px;line-height:1;color:var(--c-text)}
+.osm-popup-feedcount b{font-weight:950}
 .osm-popup a{display:inline-flex;align-items:center;gap:.35rem;padding:.33rem .6rem;border:1px solid var(--c-border);border-radius:999px;background:var(--glass);backdrop-filter:saturate(180%) blur(10px);color:var(--c-text);text-decoration:none;font-weight:800;font-size:.78rem;line-height:1}
 .osm-popup a:hover{background:var(--c-bg-soft)}
 .osm-feed-block{background:color-mix(in oklab,var(--c-bg-soft),transparent 12%);border:1px solid color-mix(in oklab,var(--c-border),transparent 10%);border-radius:12px;padding:10px 10px}
@@ -217,9 +219,18 @@ body.osm-no-scroll #ScrollToy{display:none!important}
 .osm-feed-modal{position:fixed;inset:0;z-index:31000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.38);backdrop-filter:saturate(120%) blur(10px)}
 .osm-feed-modal.open{display:flex}
 body.osm-feed-modal-open{overflow:hidden}
-.osm-feed-modal-card{position:relative;width:min(760px,94vw);max-height:min(86vh,920px);overflow:auto;border-radius:18px;background:var(--c-bg-alt);border:1px solid var(--c-border);box-shadow:var(--shadow-lg);padding:14px 14px 16px}
-.osm-feed-modal-close{position:sticky;top:0;margin-left:auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--c-border);background:var(--glass);backdrop-filter:saturate(180%) blur(10px);color:var(--c-text);font-size:22px;font-weight:900;cursor:pointer}
+.osm-feed-modal-card{position:relative;width:min(780px,94vw);max-height:min(88vh,980px);overflow:hidden;border-radius:20px;background:var(--c-bg-alt);border:1px solid var(--c-border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+.osm-feed-modal-top{position:sticky;top:0;z-index:2;background:var(--glass);backdrop-filter:saturate(180%) blur(18px);border-bottom:1px solid var(--c-border)}
+.osm-feed-modal-topbar{display:flex;align-items:center;gap:12px;padding:12px 12px}
+.osm-feed-modal-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.osm-feed-modal-brand i{font-size:1.3rem;color:var(--c-primary);flex:0 0 auto}
+.osm-feed-modal-brandtext{min-width:0;display:flex;flex-direction:column}
+.osm-feed-modal-brand .osm-popup-title{margin:0;font-size:.92rem;line-height:1.15}
+.osm-feed-modal-brand .osm-popup-meta{margin:0;margin-top:2px;font-size:.7rem;opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(62vw,520px)}
+.osm-feed-modal-close{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:14px;border:1px solid var(--c-border);background:transparent;color:var(--c-text);font-size:22px;font-weight:900;cursor:pointer;flex:0 0 auto}
 .osm-feed-modal-close:hover{background:var(--c-bg-soft)}
+.osm-feed-modal-bodywrap{padding:12px 14px 16px;overflow:auto}
+.osm-feed-modal-bodywrap .osm-popup-stack{max-height:none;overflow:visible;padding-right:0}
 .osm-feed-modal-head{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
 .osm-feed-modal-user{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .osm-feed-modal-user img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--c-bg-alt);box-shadow:0 4px 12px -6px rgba(0,0,0,.35)}
@@ -231,6 +242,8 @@ body.osm-feed-modal-open{overflow:hidden}
 @media(min-width:520px){.osm-feed-modal-imgs{grid-template-columns:repeat(3,1fr)}}
 .osm-feed-modal-imgbtn{border:0;padding:0;background:transparent;border-radius:14px;overflow:hidden;cursor:pointer}
 .osm-feed-modal-imgbtn img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:1/1}
+.osm-feed-modal-actions{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+.osm-feed-modal-actions button{display:inline-flex;align-items:center;gap:6px;padding:.36rem .68rem;border-radius:999px;border:1px solid var(--c-border);background:var(--glass);backdrop-filter:saturate(180%) blur(10px);color:var(--c-text);font-weight:900;font-size:.78rem;line-height:1;cursor:pointer}
 .osm-feed-modal-actions button:hover{background:var(--c-bg-soft)}`;
     document.head.appendChild(st);
   }
@@ -302,12 +315,14 @@ body.osm-feed-modal-open{overflow:hidden}
     if(!file) return false;
     const isUrl=/^(https?:)?\/\//i.test(file)||/^data:/i.test(file);
     if(!isUrl){
+      try{await loadScript(file);return true;}catch(e){}
       try{
         if(typeof window.getSettingScriptUrl==='function'){
           const u=window.getSettingScriptUrl(file);
           if(u){await loadScript(u);return true;}
         }
       }catch(e){}
+      return false;
     }
     try{await loadScript(file);return true;}catch(e){}
     return false;
@@ -327,8 +342,10 @@ body.osm-feed-modal-open{overflow:hidden}
     }
     const datasets={};
     for(const f of files){
-      await loadPlacesFile(f);
-      if(Array.isArray(window.PLACES)&&window.PLACES.length) datasets[f]=window.PLACES.slice();
+      try{window.PLACES=null;}catch(e){}
+      const ok=await loadPlacesFile(f);
+      if(ok && Array.isArray(window.PLACES) && window.PLACES.length) datasets[f]=window.PLACES.slice();
+      else datasets[f]=[];
     }
     const merged=[];
     for(const f of files){
@@ -382,7 +399,7 @@ body.osm-feed-modal-open{overflow:hidden}
       const avatarHtml=av?`<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"><img src=\"${esc(av)}\" alt=\"\"></button>`:`<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"></button>`;
       return `<div class=\"osm-feed-row\" data-ts=\"${esc(ts)}\">${avatarHtml}<div class=\"osm-feed-text\"><div class=\"osm-feed-title\">${esc(title)}</div>${subHtml}${snHtml}</div></div>`;
     }).filter(Boolean).join('');
-    return rows?`<div class=\"osm-popup osm-feed-block\"><div class=\"osm-popup-title\">貼文</div><div class=\"osm-feed-list\">${rows}</div></div>`:'';
+    return rows?`<div class=\"osm-popup osm-feed-block\"><div class=\"osm-feed-list\">${rows}</div></div>`:'';
   }
 
 
@@ -439,10 +456,11 @@ body.osm-feed-modal-open{overflow:hidden}
     el=document.createElement('div');
     el.id='osmFeedModal';
     el.className='osm-feed-modal';
-    el.innerHTML='<div class="osm-feed-modal-card" role="dialog" aria-modal="true"><button type="button" class="osm-feed-modal-close" aria-label="Close">×</button><div class="osm-feed-modal-bodywrap"></div></div>';
+    el.innerHTML='<div class="osm-feed-modal-card" role="dialog" aria-modal="true"><div class="osm-feed-modal-top"><div class="osm-feed-modal-topbar"><div class="osm-feed-modal-brand"><i class="uil uil-location-point"></i><span>貼文</span></div><button type="button" class="osm-feed-modal-close" aria-label="Close">×</button></div></div><div class="osm-feed-modal-bodywrap"></div></div>';
     const close=()=>{
       try{el.classList.remove('open');}catch(e){}
       try{document.body.classList.remove('osm-feed-modal-open');}catch(e){}
+      try{el._groupCtx=null;}catch(e){}
     };
     el.addEventListener('click',e=>{if(e.target===el) close();});
     const btn=el.querySelector('.osm-feed-modal-close');
@@ -452,6 +470,88 @@ body.osm-feed-modal-open{overflow:hidden}
     document.body.appendChild(el);
     return el;
   }
+
+  function _safeUilName(s){
+    s=String(s||'').trim();
+    if(!s) return 'uil-location-point';
+    s=s.replace(/^uil\s+/,'').replace(/[\s]+/g,'-').replace(/[^a-z0-9\-]/gi,'');
+    return s||'uil-location-point';
+  }
+  function _setOsmFeedModalBrand(modal,opt){
+    if(!modal) return;
+    const brand=modal.querySelector('.osm-feed-modal-brand');
+    if(!brand) return;
+    opt=opt||{};
+    const icon=_safeUilName(opt.icon||'uil-location-point');
+    const name=String(opt.name||'').trim();
+    const addr=String(opt.address||'').trim();
+    const label=String(opt.label||'貼文').trim()||'貼文';
+    if(name||addr){
+      brand.innerHTML=`<i class="uil ${icon}"></i><div class="osm-feed-modal-brandtext"><div class="osm-popup-title">${esc(name||label)}</div>${addr?`<div class="osm-popup-meta"><b>地址</b> ${esc(addr)}</div>`:''}</div>`;
+      return;
+    }
+    brand.innerHTML=`<i class="uil ${icon}"></i><span>${esc(label)}</span>`;
+  }
+  function _feedMetaTsNum(m){
+    const t=String(m&&m.ts||'').trim();
+    const n=Number(t);
+    if(isFinite(n)) return n;
+    const m2=t.match(/\d{8,}/);
+    return m2?Number(m2[0]):0;
+  }
+  function _sortFeedMetasDesc(arr){
+    const a=Array.isArray(arr)?arr.slice():[];
+    a.sort((x,y)=>{
+      const nx=_feedMetaTsNum(x);
+      const ny=_feedMetaTsNum(y);
+      if(nx&&ny&&nx!==ny) return ny-nx;
+      const sx=String(x&&x.ts||'');
+      const sy=String(y&&y.ts||'');
+      return sy.localeCompare(sx);
+    });
+    return a;
+  }
+  function _renderOsmFeedGroupInModal(modal){
+    const ctx=modal&&modal._groupCtx;
+    if(!ctx) return;
+    const wrap=modal.querySelector('.osm-feed-modal-bodywrap');
+    if(!wrap) return;
+    const metas=_sortFeedMetasDesc(ctx.metas||[]);
+    const placeName=String(ctx.place&&ctx.place.name||'').trim();
+    const placeAddr=String(ctx.place&&ctx.place.address||'').trim();
+    _setOsmFeedModalBrand(modal,{icon:'uil-location-point',name:placeName,address:placeAddr,label:'貼文'});
+    const rows=metas.slice(0,80).map(meta=>{
+      const ts=String(meta&&meta.ts||'').trim();
+      if(!ts) return '';
+      const f=findFeedByTs(ts);
+      const title=feedDisplayTitle(meta,f);
+      const sn=f?feedDisplaySnippet(f):'';
+      const user=String(f&&f.user||meta&&meta.user||'').trim();
+      const dt=String(f&&f.datetime||'').trim();
+      const sub=[user,dt].filter(Boolean).join(' • ');
+      const av=String(f&&f.avatar||meta&&meta.avatar||'').trim();
+      const avatar=av?`<button type="button" class="osm-popup-avatar" data-ts="${esc(ts)}"><img src="${esc(av)}" alt=""></button>`:`<button type="button" class="osm-popup-avatar" data-ts="${esc(ts)}"></button>`;
+      return `<div class="osm-feed-row" data-ts="${esc(ts)}">${avatar}<div class="osm-feed-text"><div class="osm-feed-title">${esc(title)}</div>${sub?`<div class=\"osm-feed-sub\">${esc(sub)}</div>`:''}${sn?`<div class=\"osm-feed-sn\">${esc(sn)}</div>`:''}</div></div>`;
+    }).filter(Boolean).join('');
+    const feedBlock=rows?`<div class="osm-popup osm-feed-block"><div class="osm-feed-list">${rows}</div></div>`:'';
+    wrap.innerHTML=`<div class="osm-popup-stack">${feedBlock||'<div class="osm-popup"><div class="osm-popup-meta">沒有貼文</div></div>'}</div>`;
+    wrap.onclick=e=>{
+      const row=e.target.closest('.osm-feed-row');
+      if(row&&row.dataset.ts){e.preventDefault();e.stopPropagation();openOsmFeedModalByTs(row.dataset.ts||'');return;}
+      const btn=e.target.closest('.osm-popup-avatar');
+      if(btn&&btn.dataset.ts){e.preventDefault();e.stopPropagation();openOsmFeedModalByTs(btn.dataset.ts||'');return;}
+    };
+  }
+  function openOsmFeedGroupModal(metas,name,address){
+    const arr=_sortFeedMetasDesc(metas||[]);
+    if(!arr.length){flash('沒有貼文');return;}
+    const modal=_ensureOsmFeedModal();
+    modal._groupCtx={metas:arr,place:{name:String(name||'').trim(),address:String(address||'').trim()}};
+    _renderOsmFeedGroupInModal(modal);
+    try{modal.classList.add('open');}catch(e){}
+    try{document.body.classList.add('osm-feed-modal-open');}catch(e){}
+  }
+
   function openOsmFeedModalByTs(ts){
     ts=String(ts||'').trim();
     if(!ts) return;
@@ -466,6 +566,12 @@ body.osm-feed-modal-open{overflow:hidden}
     const title=esc(String(f.title||'').replace(/\s*•\s*$/,'').trim());
     const geoName=esc(String(f.geo&&f.geo.name||''));
     const geoAddr=esc(String(f.geo&&f.geo.address||''));
+    const ctx=modal&&modal._groupCtx;
+    const ctxName=ctx&&ctx.place?String(ctx.place.name||'').trim():'';
+    const ctxAddr=ctx&&ctx.place?String(ctx.place.address||'').trim():'';
+    const brandName=String((f.geo&&f.geo.name)||'').trim()||ctxName;
+    const brandAddr=String((f.geo&&f.geo.address)||'').trim()||ctxAddr;
+    _setOsmFeedModalBrand(modal,brandName||brandAddr?{icon:'uil-location-point',name:brandName,address:brandAddr,label:'貼文'}:{icon:'uil-file-alt',label:(String(f.user||'').trim()||'貼文')});
     const sub=[dt,[geoName,geoAddr].filter(Boolean).join(' ')].filter(Boolean).join(' • ');
     const capRaw=String(f.caption||f.text||'');
     const parts=_splitCaptionImagesLocal(capRaw);
@@ -484,8 +590,17 @@ body.osm-feed-modal-open{overflow:hidden}
     const head=`<div class="osm-feed-modal-head"><div class="osm-feed-modal-user">${avatar?`<img src="${avatar}" alt="">`:`<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">`}<div style="min-width:0"><div class="osm-feed-modal-user-name">${user||'貼文'}</div>${sub?`<div class="osm-feed-modal-user-sub">${sub}</div>`:''}</div></div></div>`;
     const titleBlock=title?`<div class="osm-feed-modal-title">${title}</div>`:'';
     const captionBlock=bodyHtml?`<div class="osm-feed-modal-caption"><div class="caption">${bodyHtml}</div></div>`:'';
-    wrap.innerHTML=head+titleBlock+captionBlock+imgBlock;
+    const hasGroup=!!(modal&&modal._groupCtx&&Array.isArray(modal._groupCtx.metas)&&modal._groupCtx.metas.length);
+    const backBtn=hasGroup?`<div class="osm-feed-modal-actions"><button type="button" class="osm-feed-back">← 返回列表</button></div>`:'';
+    wrap.innerHTML=backBtn+head+titleBlock+captionBlock+imgBlock;
     wrap.onclick=e=>{
+      const back=e.target.closest('.osm-feed-back');
+      if(back&&modal&&modal._groupCtx){
+        e.preventDefault();
+        e.stopPropagation();
+        _renderOsmFeedGroupInModal(modal);
+        return;
+      }
       const imgBtn=e.target.closest('.osm-feed-modal-imgbtn');
       if(imgBtn){
         e.preventDefault();
@@ -639,6 +754,41 @@ body.osm-feed-modal-open{overflow:hidden}
     tiles.on('tileerror',onTileError);
     const group=L.featureGroup().addTo(map);
     const feedGroup=L.featureGroup().addTo(map);
+    let userDot=null,userAcc=null;
+    function locateMe(){
+      const btn=document.getElementById('osmMapLocateBtn');
+      if(!navigator.geolocation){
+        flash('瀏覽器不支援定位');
+        try{map.setView(defaultCenter(),defaultZoom(),{animate:false});}catch(e){}
+        return;
+      }
+      try{if(btn){btn.disabled=true;btn.classList.add('is-loading');}}catch(e){}
+      navigator.geolocation.getCurrentPosition(pos=>{
+        try{if(btn){btn.disabled=false;btn.classList.remove('is-loading');}}catch(e){}
+        const lat=Number(pos&&pos.coords&&pos.coords.latitude);
+        const lon=Number(pos&&pos.coords&&pos.coords.longitude);
+        const acc=Number(pos&&pos.coords&&pos.coords.accuracy);
+        if(!isFinite(lat)||!isFinite(lon)){
+          flash('定位失敗');
+          return;
+        }
+        try{if(userDot) userDot.setLatLng([lat,lon]); else userDot=L.circleMarker([lat,lon],{radius:8,weight:2,fillOpacity:.25}).addTo(feedGroup);}catch(e){}
+        if(isFinite(acc)&&acc>0){
+          try{if(userAcc) userAcc.setLatLng([lat,lon]).setRadius(acc); else userAcc=L.circle([lat,lon],{radius:acc,weight:1,fillOpacity:.05}).addTo(feedGroup);}catch(e){}
+        }
+        const z=Math.min(19,Math.max(17,map.getZoom()||17));
+        try{map.setView([lat,lon],z,{animate:true});}catch(e){}
+      },err=>{
+        try{if(btn){btn.disabled=false;btn.classList.remove('is-loading');}}catch(e){}
+        flash('定位失敗');
+      },{enableHighAccuracy:true,timeout:8000,maximumAge:30000});
+    }
+    const locateBtn=document.getElementById('osmMapLocateBtn');
+    if(locateBtn&&locateBtn.dataset.osmBound!=='1'){
+      locateBtn.dataset.osmBound='1';
+      locateBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();locateMe();});
+    }
+
     let invT=null;
     function scheduleInvalidate(){if(invT) clearTimeout(invT);invT=setTimeout(()=>{try{map.invalidateSize();}catch(e){} try{tiles.redraw();}catch(e){}},90);}
     scheduleInvalidate();
@@ -665,14 +815,17 @@ body.osm-feed-modal-open{overflow:hidden}
     }
     const placeKeys=new Set(byCoord.keys());
     const getFeedIdx=()=>window.__OSM_FEED_INDEX__||window.__OSM_FEED_BY_LL__||{};
-    const buildAvatarBtn=meta=>{
+    const buildAvatarBtn=(meta,count)=>{
       const ts=String(meta&&meta.ts||'').trim();
       if(!ts) return '';
       const av=String(meta&&meta.avatar||'').trim();
       const user=String(meta&&meta.user||'').trim();
-      const img=av?`<img src=\"${esc(av)}\" alt=\"\">`:'';
-      const ttl=user?` title=\"${esc(user)}\"`:'';
-      return `<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"${ttl}>${img}</button>`;
+      const img=av?`<img src="${esc(av)}" alt="">`:'';
+      const ttl=user?` title="${esc(user)}"`:'';
+      const n=Math.max(0,Number(count||0)||0);
+      const label=n>99?'99+':String(n||'');
+      const pill=n>1?`<span class="osm-popup-feedcount"><b>${esc(label)}</b></span>`:'';
+      return `<button type="button" class="osm-popup-avatar" data-ts="${esc(ts)}"${ttl}>${img}</button>${pill}`;
     };
     for(const [k,arr] of byCoord){
       const sp=k.split(',');
@@ -710,14 +863,16 @@ body.osm-feed-modal-open{overflow:hidden}
             const nm=String(pel.dataset.name||'').trim();
             const addr=String(pel.dataset.address||'').trim();
             const matched=_matchFeedsForPlace(all,nm,addr,false);
-            const html=matched.slice(0,3).map(buildAvatarBtn).filter(Boolean).join('');
+            const sorted=_sortFeedMetasDesc(matched);
+            const latest=sorted[0];
+            const html=latest?buildAvatarBtn(latest,sorted.length):'';
             box.innerHTML=html;
             box.onclick=e=>{
-              const btn=e.target.closest('.osm-popup-avatar');
-              if(!btn) return;
+              const hit=e.target.closest('.osm-popup-avatar')||e.target.closest('.osm-popup-feedcount');
+              if(!hit) return;
               e.preventDefault();
               e.stopPropagation();
-              openOsmFeedModalByTs(btn.dataset.ts||'');
+              openOsmFeedGroupModal(sorted,nm,addr);
             };
           });
         }catch(e){}
