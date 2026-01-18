@@ -100,7 +100,7 @@
     html=fix(html,false).replace(/\r?\n/g,'<br>');
     return postProcessOfferHtml(html);
   }
-  const CAT_COLORS={"美食":"#e74c3c","美食餐廳":"#e74c3c","服飾":"#9b59b6","住宿":"#3498db","旅遊住宿":"#3498db","旅遊":"#2ecc71","旅游":"#2ecc71","休閒娛樂":"#1abc9c","美容舒壓":"#9b59b6","按摩":"#f39c12","泡湯休息":"#16a085","健康商城":"#7f8c8d","通勤":"#f39c12","其他":"#7f8c8d"};
+  const CAT_COLORS={"美食":"#e74c3c","美食餐廳":"#e74c3c","服飾":"#9b59b6","住宿":"#3498db","旅遊住宿":"#3498db","旅遊":"#2ecc71","旅游":"#2ecc71","休閒娛樂":"#1abc9c","美容舒壓":"#9b59b6","按摩":"#f39c12","泡湯休息":"#16a085","健康商城":"#7f8c8d","通勤":"#f39c12","其他":"#7f8c8d","貼文":"#2563eb"};
   function catColor(cat){return CAT_COLORS[cat]||"#1abc9c";}
   function markerIcon(L,cat,count){
     const c=catColor(cat);
@@ -159,19 +159,22 @@
     const st=document.createElement('style');
     st.id='osm-map-style';
     st.textContent=`#osmMap{width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;border:1px solid var(--c-border);background:var(--c-bg-soft)}
+.osm-lazy-placeholder{width:100%;height:100%;min-height:280px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem;color:var(--c-text-soft);font-weight:800;letter-spacing:.4px}
+.osm-lazy-spinner{width:22px;height:22px;border:2px solid rgba(0,0,0,.16);border-top-color:var(--c-primary);border-radius:50%;animation:osmSpin 1s linear infinite}
+@keyframes osmSpin{to{transform:rotate(360deg)}}
 .osm-map-actions{display:flex;align-items:center;gap:.45rem}
-#osmDiscountMapPanel.osm-fullscreen{z-index:25000;max-width:none;width:100%;height:100%;border-radius:0;box-shadow:var(--shadow-lg);overflow:hidden;display:flex;flex-direction:column;gap:1rem;padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));background:var(--c-bg-alt);isolation:isolate}
-#osmDiscountMapPanel.osm-css-fullscreen{position:fixed;inset:0;width:100vw;height:100vh}
-#osmDiscountMapPanel.osm-fullscreen:after{display:none}
-#osmDiscountMapPanel.osm-fullscreen .panel-header{flex:0 0 auto;position:sticky;top:0;z-index:10020;background:var(--glass);backdrop-filter:saturate(180%) blur(18px);padding:.4rem .55rem .4rem .9rem}
-#osmDiscountMapPanel.osm-fullscreen .osm-map-actions{position:relative;z-index:10021}
-#osmDiscountMapPanel.osm-fullscreen #osmMap{aspect-ratio:auto;flex:1 1 auto;min-height:0;border-radius:18px;position:relative;z-index:1}
+#app_map.osm-fullscreen{z-index:25000;max-width:none;width:100%;height:100%;border-radius:0;box-shadow:var(--shadow-lg);overflow:hidden;display:flex;flex-direction:column;gap:1rem;padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));background:var(--c-bg-alt);isolation:isolate}
+#app_map.osm-css-fullscreen{position:fixed;inset:0;width:100vw;height:100vh}
+#app_map.osm-fullscreen:after{display:none}
+#app_map.osm-fullscreen .panel-header{flex:0 0 auto;position:sticky;top:0;z-index:10020;background:var(--glass);backdrop-filter:saturate(180%) blur(18px);padding:.4rem .55rem .4rem .9rem}
+#app_map.osm-fullscreen .osm-map-actions{position:relative;z-index:10021}
+#app_map.osm-fullscreen #osmMap{aspect-ratio:auto;flex:1 1 auto;min-height:0;border-radius:18px;position:relative;z-index:1}
 body.osm-no-scroll{overflow:hidden;transform:none!important}
 body#ScrollToyBody.osm-no-scroll{transform:none!important}
 body.osm-no-scroll #ScrollToy{display:none!important}
 .dot-icon{background:transparent;border:none}
 .leaflet-container{font:inherit}
-#osmDiscountMapPanel.osm-theme-dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.88) contrast(.92)}
+#app_map.osm-theme-dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.88) contrast(.92)}
 .leaflet-popup-content-wrapper{background:var(--c-bg-alt);color:var(--c-text);border:1px solid var(--c-border);border-radius:14px}
 .leaflet-popup-tip{background:var(--c-bg-alt)}
 .leaflet-popup-content{margin:10px 12px}
@@ -193,11 +196,42 @@ body.osm-no-scroll #ScrollToy{display:none!important}
 .osm-popup-meta b{color:var(--c-text);font-weight:900}
 .osm-popup-offer{margin:.45rem 0 0}
 .osm-popup-offer .caption{font-size:.85rem}
-.osm-popup-actions{margin:.55rem 0 0}
-.osm-popup-actions .caption{display:flex;flex-wrap:wrap;gap:.35rem}
+.osm-popup-actions{margin:.55rem 0 0;display:flex;align-items:center;justify-content:space-between;gap:.45rem}
+.osm-popup-actions .caption{display:flex;flex-wrap:wrap;gap:.35rem;min-width:0}
 .osm-popup-actions .caption a{white-space:nowrap}
+.osm-popup-feeds{display:flex;align-items:center;gap:.35rem;flex:0 0 auto}
+.osm-popup-avatar{width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid var(--c-bg-alt);background:var(--c-bg-alt);box-shadow:0 4px 12px -6px rgba(0,0,0,.35);padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.osm-popup-avatar img{width:100%;height:100%;object-fit:cover}
+.osm-popup-avatar:hover{transform:translateY(-1px)}
 .osm-popup a{display:inline-flex;align-items:center;gap:.35rem;padding:.33rem .6rem;border:1px solid var(--c-border);border-radius:999px;background:var(--glass);backdrop-filter:saturate(180%) blur(10px);color:var(--c-text);text-decoration:none;font-weight:800;font-size:.78rem;line-height:1}
-.osm-popup a:hover{background:var(--c-bg-soft)}`;
+.osm-popup a:hover{background:var(--c-bg-soft)}
+.osm-feed-block{background:color-mix(in oklab,var(--c-bg-soft),transparent 12%);border:1px solid color-mix(in oklab,var(--c-border),transparent 10%);border-radius:12px;padding:10px 10px}
+.osm-feed-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.osm-feed-row{display:flex;gap:10px;align-items:flex-start;padding:6px;border-radius:12px;cursor:pointer}
+.osm-feed-row:hover{background:color-mix(in oklab,var(--c-bg),transparent 78%)}
+#app_map.osm-theme-dark .osm-feed-row:hover{background:rgba(255,255,255,.08)}
+.osm-feed-text{flex:1;min-width:0}
+.osm-feed-title{font-size:.86rem;font-weight:900;letter-spacing:.2px;line-height:1.2}
+.osm-feed-sub{font-size:.72rem;font-weight:800;opacity:.72;margin-top:2px}
+.osm-feed-sn{font-size:.78rem;opacity:.85;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.osm-feed-modal{position:fixed;inset:0;z-index:31000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.38);backdrop-filter:saturate(120%) blur(10px)}
+.osm-feed-modal.open{display:flex}
+body.osm-feed-modal-open{overflow:hidden}
+.osm-feed-modal-card{position:relative;width:min(760px,94vw);max-height:min(86vh,920px);overflow:auto;border-radius:18px;background:var(--c-bg-alt);border:1px solid var(--c-border);box-shadow:var(--shadow-lg);padding:14px 14px 16px}
+.osm-feed-modal-close{position:sticky;top:0;margin-left:auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--c-border);background:var(--glass);backdrop-filter:saturate(180%) blur(10px);color:var(--c-text);font-size:22px;font-weight:900;cursor:pointer}
+.osm-feed-modal-close:hover{background:var(--c-bg-soft)}
+.osm-feed-modal-head{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+.osm-feed-modal-user{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.osm-feed-modal-user img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--c-bg-alt);box-shadow:0 4px 12px -6px rgba(0,0,0,.35)}
+.osm-feed-modal-user-name{font-weight:900;letter-spacing:.2px;line-height:1.1}
+.osm-feed-modal-user-sub{font-size:.76rem;font-weight:800;opacity:.72;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.osm-feed-modal-title{font-size:1.06rem;font-weight:950;letter-spacing:.2px;line-height:1.25;margin:8px 0 8px}
+.osm-feed-modal-caption .caption{font-size:.92rem}
+.osm-feed-modal-imgs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+@media(min-width:520px){.osm-feed-modal-imgs{grid-template-columns:repeat(3,1fr)}}
+.osm-feed-modal-imgbtn{border:0;padding:0;background:transparent;border-radius:14px;overflow:hidden;cursor:pointer}
+.osm-feed-modal-imgbtn img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:1/1}
+.osm-feed-modal-actions button:hover{background:var(--c-bg-soft)}`;
     document.head.appendChild(st);
   }
   function loadLeaflet(){
@@ -234,7 +268,7 @@ body.osm-no-scroll #ScrollToy{display:none!important}
   }
   function getDataFile(){
     const cfg=String(window.OSM_MAP_DATA_FILE||'').trim();
-    return cfg||'map1.js';
+    return cfg||'';
   }
   function mapDataFilesFromSettings(){
     const out=[];
@@ -264,19 +298,33 @@ body.osm-no-scroll #ScrollToy{display:none!important}
     return nm+'|'+addr+'|'+ll;
   }
   async function loadPlacesFile(file){
+    file=String(file||'').trim();
+    if(!file) return false;
+    const isUrl=/^(https?:)?\/\//i.test(file)||/^data:/i.test(file);
+    if(!isUrl){
+      try{
+        if(typeof window.getSettingScriptUrl==='function'){
+          const u=window.getSettingScriptUrl(file);
+          if(u){await loadScript(u);return true;}
+        }
+      }catch(e){}
+    }
     try{await loadScript(file);return true;}catch(e){}
-    try{
-      if(typeof window.getSettingScriptUrl==='function'){
-        const u=window.getSettingScriptUrl(file);
-        if(u){await loadScript(u);return true;}
-      }
-    }catch(e){}
     return false;
   }
   async function ensurePlaces(){
     if(window.__OSM_PLACES_READY) return;
     const files=mapDataFilesFromSettings();
-    if(!files.length) files.push(getDataFile());
+    const df=getDataFile();
+    if(!files.length && df) files.push(df);
+    if(!files.length){
+      if(Array.isArray(window.PLACES)&&window.PLACES.length){
+        window.OSM_MAP_DATASETS=window.OSM_MAP_DATASETS||{inline:window.PLACES.slice()};
+        window.OSM_MAP_DATASET_ORDER=window.OSM_MAP_DATASET_ORDER||['inline'];
+        window.__OSM_PLACES_READY=true;
+      }
+      return;
+    }
     const datasets={};
     for(const f of files){
       await loadPlacesFile(f);
@@ -311,6 +359,149 @@ body.osm-no-scroll #ScrollToy{display:none!important}
   function expireFromOffer(v){const m=String(v||'').match(/(?:到期|有效(?:期限)?|截止)\s*[:：]?\s*(\d{8})/);return m?parseYmd(m[1]):0;}
   function placeExpire(p){return parseYmd((p&&((p.expire??p.expiry??p.exp??p.end??p.until)))||'')||expireFromOffer(p&&p.offer||'');}
   function isExpired(p,today){const e=placeExpire(p);return !!(e&&today>e);}
+  function stripTags(s){return String(s||'').replace(/<[^>]*>/g,'');}
+  function clampPlainText(s,n){let t=stripTags(s).replace(/\s+/g,' ').trim();n=Math.max(8,Number(n||0)||0);if(!t) return '';return t.length>n?t.slice(0,n-1)+'…':t;}
+  function findFeedByTs(ts){ts=String(ts||'').trim();if(!ts) return null;try{const arr=Array.isArray(window.feedArray)?window.feedArray:[];for(const f of arr){if(String(f&&f.ts||'').trim()===ts) return f;}}catch(e){}return null;}
+  function feedDisplayTitle(meta,feed){const t=String(feed&&feed.title||'').trim();if(t) return t;const u=String((feed&&feed.user)||(meta&&meta.user)||'').trim();return u||'貼文';}
+  function feedDisplaySnippet(feed){const c=String(feed&&feed.caption||feed&&feed.text||'').trim();return clampPlainText(c,90);}
+  function buildFeedBlock(feeds){
+    const arr=Array.isArray(feeds)?feeds:[];
+    if(!arr.length) return '';
+    const rows=arr.slice(0,6).map(meta=>{
+      const ts=String(meta&&meta.ts||'').trim();
+      if(!ts) return '';
+      const av=String(meta&&meta.avatar||'').trim();
+      const f=findFeedByTs(ts);
+      const title=feedDisplayTitle(meta,f);
+      const sn=f?feedDisplaySnippet(f):'';
+      const user=String(f&&f.user||meta&&meta.user||'').trim();
+      const dt=String(f&&f.datetime||'').trim();
+      const sub=[user,dt].filter(Boolean).join(' • ');
+      const subHtml=sub?`<div class=\"osm-feed-sub\">${esc(sub)}</div>`:'';
+      const snHtml=sn?`<div class=\"osm-feed-sn\">${esc(sn)}</div>`:'';
+      const avatarHtml=av?`<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"><img src=\"${esc(av)}\" alt=\"\"></button>`:`<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"></button>`;
+      return `<div class=\"osm-feed-row\" data-ts=\"${esc(ts)}\">${avatarHtml}<div class=\"osm-feed-text\"><div class=\"osm-feed-title\">${esc(title)}</div>${subHtml}${snHtml}</div></div>`;
+    }).filter(Boolean).join('');
+    return rows?`<div class=\"osm-popup osm-feed-block\"><div class=\"osm-popup-title\">貼文</div><div class=\"osm-feed-list\">${rows}</div></div>`:'';
+  }
+
+
+  function _normFeedStr(v){
+    v=String(v??'').trim().toLowerCase();
+    if(!v) return '';
+    v=v.replace(/[\u3000\s]+/g,'');
+    v=v.replace(/[()（）\[\]【】{}「」『』"'“”‘’，、;；:：.。!?！？\-—_]+/g,'');
+    return v;
+  }
+  function _matchFeedsForPlace(all,name,addr,allowLoose){
+    allowLoose=allowLoose!==false;
+    const arr=Array.isArray(all)?all:[];
+    const nName=_normFeedStr(name);
+    const nAddr=_normFeedStr(addr);
+    if(!arr.length) return [];
+    const loose=[];
+    const out=[];
+    for(const m of arr){
+      if(!m) continue;
+      const mName=_normFeedStr(m.gName||m.name||'');
+      const mAddr=_normFeedStr(m.gAddr||m.address||'');
+      if(!mName && !mAddr){loose.push(m);continue;}
+      let ok=false;
+      if(nName && mName){
+        if(nName===mName){
+          if(nAddr && mAddr) ok=(nAddr===mAddr);
+          else ok=true;
+        }
+      }else if(nName && !mName){
+        ok=!!(nAddr && mAddr && nAddr===mAddr);
+      }else if(!nName && mName){
+        ok=!!(nAddr && mAddr && nAddr===mAddr);
+      }else{
+        ok=!!(nAddr && mAddr && nAddr===mAddr);
+      }
+      if(ok) out.push(m);
+    }
+    if(out.length) return out;
+    if(allowLoose && loose.length) return loose.slice();
+    return [];
+  }
+  function _splitCaptionImagesLocal(html){
+    let temp;
+    try{temp=document.createElement('div');}catch(e){return {body:esc(String(html||'')),imgs:[]};}
+    temp.innerHTML=String(html||'');
+    const imgs=Array.from(temp.querySelectorAll('img')).map(im=>(im.getAttribute('src')||'').trim()).filter(Boolean);
+    try{temp.querySelectorAll('img').forEach(im=>im.remove());}catch(e){}
+    return {body:temp.innerHTML||'',imgs};
+  }
+  function _ensureOsmFeedModal(){
+    let el=document.getElementById('osmFeedModal');
+    if(el) return el;
+    el=document.createElement('div');
+    el.id='osmFeedModal';
+    el.className='osm-feed-modal';
+    el.innerHTML='<div class="osm-feed-modal-card" role="dialog" aria-modal="true"><button type="button" class="osm-feed-modal-close" aria-label="Close">×</button><div class="osm-feed-modal-bodywrap"></div></div>';
+    const close=()=>{
+      try{el.classList.remove('open');}catch(e){}
+      try{document.body.classList.remove('osm-feed-modal-open');}catch(e){}
+    };
+    el.addEventListener('click',e=>{if(e.target===el) close();});
+    const btn=el.querySelector('.osm-feed-modal-close');
+    if(btn) btn.addEventListener('click',close);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&el.classList.contains('open')) close();});
+    el.__close=close;
+    document.body.appendChild(el);
+    return el;
+  }
+  function openOsmFeedModalByTs(ts){
+    ts=String(ts||'').trim();
+    if(!ts) return;
+    const f=findFeedByTs(ts);
+    if(!f){flash('找不到貼文');return;}
+    const modal=_ensureOsmFeedModal();
+    const wrap=modal.querySelector('.osm-feed-modal-bodywrap');
+    if(!wrap) return;
+    const user=esc(String(f.user||''));
+    const avatar=esc(String(f.avatar||''));
+    const dt=esc(String(f.datetime||f.date||''));
+    const title=esc(String(f.title||'').replace(/\s*•\s*$/,'').trim());
+    const geoName=esc(String(f.geo&&f.geo.name||''));
+    const geoAddr=esc(String(f.geo&&f.geo.address||''));
+    const sub=[dt,[geoName,geoAddr].filter(Boolean).join(' ')].filter(Boolean).join(' • ');
+    const capRaw=String(f.caption||f.text||'');
+    const parts=_splitCaptionImagesLocal(capRaw);
+    const bodyHtml=parts.body?(hasHtml(parts.body)?parts.body:esc(parts.body).replace(/\r?\n/g,'<br>')):'';
+    let imgs=Array.isArray(parts.imgs)?parts.imgs.slice():[];
+    if(!imgs.length){
+      let extra=[];
+      if(Array.isArray(f.imgs)) extra=f.imgs;
+      else if(Array.isArray(f.images)) extra=f.images;
+      else if(Array.isArray(f.img)) extra=f.img;
+      else if(typeof f.img==='string') extra=[f.img];
+      imgs=extra.map(x=>String(x||'').trim()).filter(Boolean);
+    }
+    const imgHtml=imgs.slice(0,9).map(u=>`<button type="button" class="osm-feed-modal-imgbtn" data-src="${esc(u)}"><img src="${esc(u)}" alt=""></button>`).join('');
+    const imgBlock=imgHtml?`<div class="osm-feed-modal-imgs">${imgHtml}</div>`:'';
+    const head=`<div class="osm-feed-modal-head"><div class="osm-feed-modal-user">${avatar?`<img src="${avatar}" alt="">`:`<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">`}<div style="min-width:0"><div class="osm-feed-modal-user-name">${user||'貼文'}</div>${sub?`<div class="osm-feed-modal-user-sub">${sub}</div>`:''}</div></div></div>`;
+    const titleBlock=title?`<div class="osm-feed-modal-title">${title}</div>`:'';
+    const captionBlock=bodyHtml?`<div class="osm-feed-modal-caption"><div class="caption">${bodyHtml}</div></div>`:'';
+    wrap.innerHTML=head+titleBlock+captionBlock+imgBlock;
+    wrap.onclick=e=>{
+      const imgBtn=e.target.closest('.osm-feed-modal-imgbtn');
+      if(imgBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        const src=String(imgBtn.dataset.src||'').trim();
+        if(src){
+          if(typeof window.openImageLightbox==='function') window.openImageLightbox(src,'');
+          else window.open(src,'_blank','noopener');
+        }
+        return;
+      }
+    };
+    try{modal.classList.add('open');}catch(e){}
+    try{document.body.classList.add('osm-feed-modal-open');}catch(e){}
+  }
+
   function buildPopup(p,idx,showSrc){
     const nm=esc(p.name||'');
     const cat=esc(p.cat||'');
@@ -323,13 +514,13 @@ body.osm-no-scroll #ScrollToy{display:none!important}
     const src=showSrc?esc(String(p.__src||'')):'';
     const items=[cat?`<div class="osm-popup-meta"><b>分類</b> ${cat}</div>`:'',addr?`<div class="osm-popup-meta"><b>地址</b> ${addr}</div>`:'',phone?`<div class="osm-popup-meta"><b>電話</b> ${esc(phone)}</div>`:''].filter(Boolean).join('');
     const offerBlock=offerHtml?`<div class="osm-popup-offer"><div class="caption">${offerHtml}</div></div>`:'';
-    const actions=(tel||addrBtn)?`<div class="osm-popup-actions"><div class="caption">${[addrBtn,tel].filter(Boolean).join('')}</div></div>`:'';
+    const actions=`<div class="osm-popup-actions"><div class="caption">${[addrBtn,tel].filter(Boolean).join('')}</div><div class="osm-popup-feeds"></div></div>`;
     const cls=['osm-popup'];
     const n=Math.max(0,Number(idx||0));
     if(n) cls.push('osm-popup'+n);
     const srcSlug=String(p.__src||'').trim().toLowerCase().replace(/\.js$/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
     if(srcSlug) cls.push('osm-src-'+srcSlug);
-    return `<div class="${cls.join(' ')}"><div class="osm-popup-title">${nm}</div>${items}${offerBlock}${actions}</div>`;
+    return `<div class="${cls.join(' ')}" data-name="${nm}" data-address="${addr}"><div class="osm-popup-title">${nm}</div>${items}${offerBlock}${actions}</div>`;
   }
   function buildPopupStack(list){
     const arr=Array.isArray(list)?list.filter(Boolean):[];
@@ -340,16 +531,123 @@ body.osm-no-scroll #ScrollToy{display:none!important}
     if(blocks.length<=1) return blocks[0]||'';
     return `<div class="osm-popup-stack">${blocks.join('')}</div>`;
   }
-  function initMap(L,places){
-    const panel=document.getElementById('osmDiscountMapPanel');
+  async function initMap(L,places){
+    const panel=document.getElementById('app_map');
     const mapEl=document.getElementById('osmMap');
     if(!panel||!mapEl) return;
     if(panel._osmMap) return;
+    try{mapEl.innerHTML='';}catch(e){}
     const map=L.map(mapEl,{zoomControl:true,attributionControl:true});
     panel._osmMap=map;
-    const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
+
+    const TILE_SOURCES=(function(){
+      const arr=[];
+      try{
+        const cu=String(window.OSM_TILE_URL_TEMPLATE||window.OSM_TILE_URL||'').trim();
+        const ca=String(window.OSM_TILE_ATTRIBUTION||'').trim();
+        if(cu) arr.push({url:cu,attr:ca||''});
+      }catch(e){}
+      arr.push(
+        {url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',subdomains:'abc',attr:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'},
+        {url:'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',subdomains:'abc',attr:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'},
+        {url:'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',subdomains:'abc',attr:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'},
+        {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',subdomains:'abcd',opts:{detectRetina:true},attr:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'},
+        {url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',subdomains:'abcd',opts:{detectRetina:true},attr:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'}
+      );
+      return arr;
+    })();
+    function makeTiles(i){
+      const s=TILE_SOURCES[i]||TILE_SOURCES[0];
+      const o=Object.assign({maxZoom:19,attribution:s.attr||''},s.opts||{});
+      if(s.subdomains) o.subdomains=s.subdomains;
+      return L.tileLayer(s.url,o);
+    }
+    function _probeUrl(s){
+      const sd=s&&s.subdomains?String(s.subdomains):'a';
+      const sub=sd?sd[0]:'a';
+      let u=String(s&&s.url||'');
+      u=u.replace('{s}',sub).replace('{z}','0').replace('{x}','0').replace('{y}','0').replace('{r}','');
+      if(!u) return '';
+      return u+(u.includes('?')?'&':'?')+'osm_probe='+(Date.now());
+    }
+    function probeTileSource(s,timeoutMs){
+      timeoutMs=Number(timeoutMs)||2200;
+      return new Promise(resolve=>{
+        let done=false;
+        const img=new Image();
+        const finish=ok=>{
+          if(done) return;
+          done=true;
+          try{clearTimeout(t);}catch(e){}
+          img.onload=img.onerror=null;
+          resolve(!!ok);
+        };
+        const t=setTimeout(()=>finish(false),timeoutMs);
+        img.onload=()=>finish(true);
+        img.onerror=()=>finish(false);
+        try{img.decoding='async';}catch(e){}
+        const url=_probeUrl(s);
+        if(!url){finish(false);return;}
+        img.src=url;
+      });
+    }
+    async function pickInitialTileIndex(){
+      try{
+        const checks=await Promise.all(TILE_SOURCES.map(s=>probeTileSource(s,2200).catch(()=>false)));
+        for(let i=0;i<checks.length;i++){if(checks[i]) return i;}
+      }catch(e){}
+      return 0;
+    }
+    let tileIndex=await pickInitialTileIndex();
+    let tileOk=false;
+    const onTileLoad=()=>{tileOk=true;};
+    function armTileWatchdog(){
+      setTimeout(()=>{
+        if(tileOk) return;
+        if(tileIndex>=TILE_SOURCES.length-1) return;
+        switchTiles();
+      },3000);
+    }
+    let tiles=makeTiles(tileIndex);
     tiles.addTo(map);
+    tiles.on('tileload',onTileLoad);
+    armTileWatchdog();
+    try{if(mapEl.getBoundingClientRect&&mapEl.getBoundingClientRect().height<140) mapEl.style.height='60vh';}catch(e){}
+    try{map.setView(defaultCenter(),defaultZoom(),{animate:false});}catch(e){};
+    let tileErr=0,tileErrT=0;
+    const onTileError=()=>{
+      const now=Date.now();
+      if(!tileErrT||now-tileErrT>8000){tileErrT=now;tileErr=0}
+      tileErr++;
+      if(tileErr>=8) switchTiles();
+    };
+    function switchTiles(){
+      if(tileIndex>=TILE_SOURCES.length-1) return;
+      tileIndex++;
+      try{map.removeLayer(tiles)}catch(e){}
+      tiles=makeTiles(tileIndex);
+      tiles.addTo(map);
+      tileOk=false;
+      tiles.on('tileload',onTileLoad);
+      armTileWatchdog();
+    try{if(mapEl.getBoundingClientRect&&mapEl.getBoundingClientRect().height<140) mapEl.style.height='60vh';}catch(e){}
+    try{map.setView(defaultCenter(),defaultZoom(),{animate:false});}catch(e){};
+      tileErr=0;
+      tileErrT=0;
+      tiles.on('tileerror',onTileError);
+    }
+    tiles.on('tileerror',onTileError);
     const group=L.featureGroup().addTo(map);
+    const feedGroup=L.featureGroup().addTo(map);
+    let invT=null;
+    function scheduleInvalidate(){if(invT) clearTimeout(invT);invT=setTimeout(()=>{try{map.invalidateSize();}catch(e){} try{tiles.redraw();}catch(e){}},90);}
+    scheduleInvalidate();
+    try{window.addEventListener("resize",scheduleInvalidate);}catch(e){}
+    try{new ResizeObserver(scheduleInvalidate).observe(mapEl);}catch(e){}
+    try{new IntersectionObserver(es=>{if(es.some(r=>r.isIntersecting)) scheduleInvalidate();}).observe(mapEl);}catch(e){}
+    let kicked=false;
+    map.on("movestart",()=>{if(kicked) return;kicked=true;scheduleInvalidate();});
+    map.on("zoomstart",()=>{if(kicked) return;kicked=true;scheduleInvalidate();});
     const today=ymdToday();
     const norm=flattenPlaces(places||[]).filter(p=>!isExpired(p,today));
     const files=Array.isArray(window.OSM_MAP_DATASET_ORDER)&&window.OSM_MAP_DATASET_ORDER.length?window.OSM_MAP_DATASET_ORDER.slice():mapDataFilesFromSettings();
@@ -365,6 +663,17 @@ body.osm-no-scroll #ScrollToy{display:none!important}
       if(!a){a=[];byCoord.set(k,a);}
       a.push(p);
     }
+    const placeKeys=new Set(byCoord.keys());
+    const getFeedIdx=()=>window.__OSM_FEED_INDEX__||window.__OSM_FEED_BY_LL__||{};
+    const buildAvatarBtn=meta=>{
+      const ts=String(meta&&meta.ts||'').trim();
+      if(!ts) return '';
+      const av=String(meta&&meta.avatar||'').trim();
+      const user=String(meta&&meta.user||'').trim();
+      const img=av?`<img src=\"${esc(av)}\" alt=\"\">`:'';
+      const ttl=user?` title=\"${esc(user)}\"`:'';
+      return `<button type=\"button\" class=\"osm-popup-avatar\" data-ts=\"${esc(ts)}\"${ttl}>${img}</button>`;
+    };
     for(const [k,arr] of byCoord){
       const sp=k.split(',');
       const lat=Number(sp[0]);
@@ -378,58 +687,44 @@ body.osm-no-scroll #ScrollToy{display:none!important}
         return String(a.name||'').localeCompare(String(b.name||''),'zh-Hant');
       });
       const cat=String((items[0]&&items[0].cat)||'');
+      
       const m=L.marker([lat,lon],{icon:markerIcon(L,cat,items.length)});
-      m.bindPopup(buildPopupStack(items),{maxWidth:360,closeButton:true,autoPanPadding:[24,24]});
       m.addTo(group);
-    }
-    if(group.getLayers().length){
-      try{map.fitBounds(group.getBounds(),{padding:[24,24],maxZoom:16});}
-      catch(e){map.setView(defaultCenter(),defaultZoom());}
-    }else{
-      map.setView(defaultCenter(),defaultZoom());
-    }
-    const cats=[...new Set(norm.map(p=>String(p.cat||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
-    let legendEl=null;
-    const legend=L.control({position:'bottomright'});
-    legend.onAdd=function(){
-      const d=L.DomUtil.create('div','osm-legend');
-      legendEl=d;
-      d.innerHTML=cats.map(k=>`<div class="osm-legend-row"><span class="osm-legend-dot" style="background:${catColor(k)}"></span><span>${esc(k)}</span></div>`).join('')||`<div class="osm-legend-row"><span style="opacity:.7">無分類</span></div>`;
-      return d;
-    };
-    legend.addTo(map);
-    function applyTheme(){panel.classList.toggle('osm-theme-dark',isDark());}
-    applyTheme();
-    try{new MutationObserver(applyTheme).observe(document.body,{attributes:true,attributeFilter:['data-theme']});}catch(e){}
-    let userMarker=null,userCircle=null;
-    function setUserMarker(latlng,acc){
-      try{if(userMarker) map.removeLayer(userMarker);}catch(e){}
-      try{if(userCircle) map.removeLayer(userCircle);}catch(e){}
-      userMarker=L.circleMarker(latlng,{radius:8,weight:2,opacity:1,fillOpacity:.35});
-      userCircle=L.circle(latlng,{radius:Math.max(10,acc||0),weight:1,opacity:.25,fillOpacity:.12});
-      userCircle.addTo(map);
-      userMarker.addTo(map);
-    }
-    const locateBtn=document.getElementById('osmMapLocateBtn');
-    if(locateBtn){
-      locateBtn.addEventListener('click',()=>{
-        if(!navigator.geolocation){flash('此瀏覽器不支援定位');return;}
-        locateBtn.disabled=true;
-        navigator.geolocation.getCurrentPosition(pos=>{
-          locateBtn.disabled=false;
-          const lat=pos.coords.latitude,lon=pos.coords.longitude;
-          const acc=pos.coords.accuracy;
-          const ll=[lat,lon];
-          setUserMarker(ll,acc);
-          map.setView(ll,Math.max(map.getZoom(),16));
-          flash('已定位');
-        },()=>{
-          locateBtn.disabled=false;
-          flash('定位失敗');
-        },{enableHighAccuracy:true,timeout:9000,maximumAge:600000});
+      m.bindPopup(buildPopupStack(items),{maxWidth:360,closeButton:true,autoPanPadding:[24,24]});
+      m.on('popupopen',()=>{
+        try{
+          const pop=m.getPopup();
+          const el=pop&&typeof pop.getElement==='function'?pop.getElement():null;
+          if(!el) return;
+          const ll=m.getLatLng();
+          const llKey=isFinite(ll.lat)&&isFinite(ll.lng)?ll.lat.toFixed(6)+','+ll.lng.toFixed(6):'';
+          const idx=getFeedIdx();
+          const all=llKey&&idx[llKey]?idx[llKey]:[];
+          const content=el.querySelector('.leaflet-popup-content')||el;
+          try{content.querySelectorAll('.osm-feed-block').forEach(n=>n.remove());}catch(e){}
+          const popEls=content.querySelectorAll('.osm-popup');
+          if(!popEls||!popEls.length) return;
+          popEls.forEach((pel,i)=>{
+            const box=pel.querySelector('.osm-popup-feeds');
+            if(!box) return;
+            const nm=String(pel.dataset.name||'').trim();
+            const addr=String(pel.dataset.address||'').trim();
+            const matched=_matchFeedsForPlace(all,nm,addr,false);
+            const html=matched.slice(0,3).map(buildAvatarBtn).filter(Boolean).join('');
+            box.innerHTML=html;
+            box.onclick=e=>{
+              const btn=e.target.closest('.osm-popup-avatar');
+              if(!btn) return;
+              e.preventDefault();
+              e.stopPropagation();
+              openOsmFeedModalByTs(btn.dataset.ts||'');
+            };
+          });
+        }catch(e){}
       });
     }
     const fsBtn=document.getElementById('osmMapFullscreenBtn');
+    const getLegendEl=()=>{try{return document.getElementById('osmMapLegend')||null;}catch(e){return null;}};
     let prevView=null,fsLock=false;
     let portalParent=panel.parentNode,portalNext=panel.nextSibling,isPortaled=false;
     function portalOn(){
@@ -460,8 +755,8 @@ body.osm-no-scroll #ScrollToy{display:none!important}
       panel.classList.add('osm-css-fullscreen');
       document.body.classList.add('osm-no-scroll');
       setFsBtn(true);
-      if(legendEl) legendEl.classList.add('is-visible');
-      const z=defaultZoom();
+      try{const l=getLegendEl();if(l) l.classList.add('is-visible');}catch(e){};
+      const z=Math.min(19,defaultZoom()+2);
       const c=defaultCenter();
       setTimeout(()=>{try{map.invalidateSize();}catch(e){};try{map.setView(c,z,{animate:false});}catch(e){}},80);
       fsLock=false;
@@ -472,9 +767,11 @@ body.osm-no-scroll #ScrollToy{display:none!important}
       panel.classList.remove('osm-css-fullscreen');
       document.body.classList.remove('osm-no-scroll');
       setFsBtn(false);
-      if(legendEl) legendEl.classList.remove('is-visible');
+      try{const l=getLegendEl();if(l) l.classList.remove('is-visible');}catch(e){};
       portalOff();
-      if(prevView) try{map.setView(prevView.center,prevView.zoom,{animate:false});}catch(e){}
+      const c=defaultCenter();
+      const z=defaultZoom();
+      try{map.setView(c,z,{animate:false});}catch(e){}
       setTimeout(()=>{try{map.invalidateSize();}catch(e){}},80);
       fsLock=false;
     }
@@ -485,6 +782,8 @@ body.osm-no-scroll #ScrollToy{display:none!important}
       });
     }
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('osm-fullscreen')) exitFullscreen();});
+    window.osmResetViewToDefault=function(){try{map.setView(defaultCenter(),defaultZoom(),{animate:false});}catch(e){}};
+    window.osmExitFullscreenAndReset=function(){try{if(panel.classList.contains('osm-fullscreen')) exitFullscreen(); else window.osmResetViewToDefault();}catch(e){}};
     setTimeout(()=>{try{map.invalidateSize();}catch(e){}},60);
   }
   window.initOsmDiscountMap=async function(){
@@ -493,8 +792,50 @@ body.osm-no-scroll #ScrollToy{display:none!important}
       await loadLeaflet();
       await ensurePlaces();
       const places=Array.isArray(window.PLACES)?window.PLACES:[];
-      initMap(window.L,places);
+      await initMap(window.L,places);
     }catch(e){}
   };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>window.initOsmDiscountMap()); else window.initOsmDiscountMap();
+  window.ensureOsmPlaces=function(){try{return ensurePlaces();}catch(e){return Promise.resolve([])}};
+  function setupLazyOsm(){
+    const panel=document.getElementById('app_map');
+    const mapEl=document.getElementById('osmMap');
+    if(!panel||!mapEl) return;
+    if(mapEl.dataset.osmLazy==='1') return;
+    mapEl.dataset.osmLazy='1';
+    if(!mapEl.innerHTML||!String(mapEl.innerHTML).trim()) mapEl.innerHTML='<div class="osm-lazy-placeholder"><div class="osm-lazy-spinner"></div><div>地圖載入中…</div></div>';
+    const kick=()=>{try{window.initOsmDiscountMap();}catch(e){}};
+    const relay=(btn)=>{
+      if(!btn) return;
+      btn.addEventListener('click',e=>{
+        if(panel._osmMap) return;
+        e.preventDefault();
+        e.stopPropagation();
+        Promise.resolve().then(()=>window.initOsmDiscountMap()).then(()=>setTimeout(()=>{try{btn.click();}catch(_){}} ,0));
+      },true);
+      btn.addEventListener('pointerdown',()=>{if(!panel._osmMap) kick();},{once:true,passive:true});
+      btn.addEventListener('touchstart',()=>{if(!panel._osmMap) kick();},{once:true,passive:true});
+    };
+    relay(document.getElementById('osmMapLocateBtn'));
+    relay(document.getElementById('osmMapFullscreenBtn'));
+    mapEl.addEventListener('pointerdown',()=>{if(!panel._osmMap) kick();},{once:true,passive:true});
+    mapEl.addEventListener('touchstart',()=>{if(!panel._osmMap) kick();},{once:true,passive:true});
+    if('IntersectionObserver' in window){
+      const io=new IntersectionObserver(es=>{
+        for(const en of es){
+          if(en.isIntersecting&&en.intersectionRatio>0){
+            io.disconnect();
+            kick();
+            break;
+          }
+        }
+      },{root:null,threshold:[0,0.05,0.1]});
+      try{io.observe(mapEl);}catch(e){kick();}
+    }else{
+      let done=false;
+      const on=()=>{if(done) return;done=true;try{window.removeEventListener('scroll',on);}catch(e){};kick();};
+      window.addEventListener('scroll',on,{passive:true});
+      setTimeout(on,1000);
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setupLazyOsm); else setupLazyOsm();
 })();
