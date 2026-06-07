@@ -569,6 +569,15 @@ function openImageLightbox(src, alt){
 
     initLazyImages(scope);
   }
+
+  const ELEARNING_FALLBACK_IMAGE='https://elearning.xms.cch.org.tw/sysdata/course/393/8d9a_m.jpg';
+  function _courseTrim(s,n){s=String(s||'').replace(/\s+/g,' ').trim();n=Number(n)||120;return s.length>n?s.slice(0,n-1)+'…':s}
+  function elearningCourseUrlFrom(item,html,ytStr){const vals=[];try{vals.push(item&&item.courseLink,item&&item.link,item&&item.url,item&&item.href,ytStr,html,item&&item.caption,item&&item.yt)}catch(e){}for(const v of vals){const m=String(v||'').match(/https?:\/\/elearning\.xms\.cch\.org\.tw\/course\/\d+/i);if(m)return m[0]}return''}
+  function elearningImageFrom(item,html){const candidates=[];try{if(item&&Array.isArray(item.slides))item.slides.forEach(x=>candidates.push(x));if(item&&Array.isArray(item.images))item.images.forEach(x=>candidates.push(x));if(item)candidates.push(item.courseImage,item.image,item.img,item.thumb,item.thumbnail)}catch(e){}const m=String(html||'').match(/<img\b[^>]*\bsrc=(['"])(.*?)\1[^>]*>/i)||String(html||'').match(/<img\b[^>]*\bsrc=([^\s>]+)[^>]*>/i);if(m)candidates.push(m[2]||m[1]||'');const hit=candidates.map(x=>String(x||'').trim().replace(/^['"]|['"]$/g,'')).find(x=>x&&!/^data:image\/gif/i.test(x));return hit||ELEARNING_FALLBACK_IMAGE}
+  function cleanElearningCaptionHtml(html){let s=String(html||'');s=s.replace(/<img\b[^>]*>/gi,'');s=s.replace(/(?:^|\s*<br\s*\/?>(?:\s|&nbsp;)*)課程日期：[^<]*(?:<br\s*\/?>)?/gi,'');s=s.replace(/(?:^|\s*<br\s*\/?>(?:\s|&nbsp;)*)課程連結：\s*(?:<a\b[^>]*>[\s\S]*?<\/a>|https?:\/\/elearning\.xms\.cch\.org\.tw\/course\/\d+)[\s\S]*?(?=(?:<br\s*\/?>|$))/gi,'');s=s.replace(/(?:<br\s*\/?>\s*)?課程連結：\s*<a\b[^>]*>[\s\S]*?<\/a>\s*(?:<br\s*\/?>)?/gi,'');s=s.replace(/(?:<br\s*\/?>\s*){2,}/gi,'<br>');s=s.replace(/^(?:\s|&nbsp;|<br\s*\/?>)+/gi,'').replace(/(?:\s|&nbsp;|<br\s*\/?>)+$/gi,'');return s.trim()}
+  function elearningPlainText(item){const temp=document.createElement('div');temp.innerHTML=cleanElearningCaptionHtml((item&&item.caption)||'');Array.from(temp.querySelectorAll('br')).forEach(br=>{br.parentNode&&br.parentNode.insertBefore(document.createTextNode('\n'),br);br.remove()});return(temp.textContent||'').replace(/課程簡介[:：]?/g,'').replace(/附件[:：]/g,'附件：').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\n[ \t]+/g,'\n').trim()}
+  function elearningTextChunks(text,title){let t=String(text||'').replace(/\r/g,'\n');t=t.replace(/[。！？；]/g,m=>m+'\n').replace(/█/g,'\n').replace(/【/g,'\n【');let lines=t.split(/\n+/).map(x=>x.replace(/^[-•*\d\.、\s]+/,'').replace(/\s+/g,' ').trim()).filter(Boolean);lines=lines.filter(x=>!/^附件：?$/i.test(x)&&!/\.(pptx?|pdf|mp4|ecm)\s*\(/i.test(x));const out=[];lines.forEach(x=>{x=x.replace(/^課程摘要[:：]?\s*/,'').replace(/^摘要內容\s*/,'').replace(/^摘要[:：]?\s*/,'').trim();if(!x)return;if(x.length<8&&out.length)out[out.length-1]=(out[out.length-1]+' '+x).trim();else if(!out.some(y=>y===x||y.includes(x)||x.includes(y)))out.push(x)});if(!out.length&&String(title||'').trim())out.push(String(title).trim());return out.slice(0,8)}
+  function buildElearningCourseCaption(item,courseLink){courseLink=courseLink||elearningCourseUrlFrom(item,(item&&item.caption)||'',(item&&item.yt)||'');if(!courseLink)return'';const title=String((item&&item.title)||'數位學習課程').replace(/\s*•\s*$/,'').trim();const text=elearningPlainText(item);const chunks=elearningTextChunks(text,title);const overview=_courseTrim(chunks[0]||text||title||'點擊課程縮圖上的播放按鈕，即可開啟課程連結。',155);const segs=(chunks.length?chunks:[overview]).slice(0,5);const renderSegments=(list,compact=false)=>list.map((txt,i)=>`<span class="yt-ai-segment yt-ai-readable"><span class="yt-ai-time"><i class="uil uil-play-circle"></i>課程</span><span class="yt-ai-segment-text">${esc(_courseTrim(txt,compact?86:150))}</span></span>${i<list.length-1?'<span class="yt-ai-sep"></span>':''}`).join('');const segmentHtml=renderSegments(segs,false);const previewSegs=segs.slice(0,Math.min(2,segs.length));const segmentPreviewHtml=renderSegments(previewSegs.length?previewSegs:segs,true);const outline=segs.slice(0,3).map(x=>`<li>${esc(_courseTrim(x,78))}</li>`).join('')||`<li>${esc(title)}</li>`;const reminders=segs.slice(0,4).map(x=>`<li>${esc(_courseTrim(x,86))}</li>`).join('')||'<li>先掌握課程主題，再依內容回到臨床或工作情境應用。</li>';const answers=[overview,segs.slice(1,4).join(' ')||overview,'點擊左側課程縮圖中央的播放按鈕，即可直接開啟課程連結。'];const questions=['這門課的主要主題是什麼？','本課程最需要掌握的重點有哪些？','要進入課程時應該怎麼操作？'];const quiz=questions.map((q,i)=>`<details><summary><span>${i+1}</span>${esc(q)}</summary><p>${esc(_courseTrim(answers[i]||overview,220))}</p></details>`).join('');return`<div class="yt-ai-panel" data-ai-caption="elearning" data-course-link="${esc(courseLink)}"><div class="yt-ai-section"><h5><i class="uil uil-map"></i> 整理<button type="button" class="caption-more btn btn-outline yt-ai-more-toggle" data-ai-more aria-expanded="false">顯示更多</button></h5><div class="yt-ai-segments" data-ai-segments="preview">${segmentPreviewHtml}</div><template data-ai-segments-preview>${segmentPreviewHtml}</template><template data-ai-segments-full>${segmentHtml}</template></div><div class="yt-ai-more-body"><div class="yt-ai-grid"><div class="yt-ai-card"><h6><i class="uil uil-route"></i> 學習大綱</h6><ol>${outline}</ol></div><div class="yt-ai-card"><h6><i class="uil uil-lightbulb-alt"></i> 重點</h6><ul>${reminders}</ul></div></div><div class="yt-ai-quiz"><h5><i class="uil uil-question-circle"></i> 練習題</h5>${quiz}</div></div></div>`}
   function buildFeed(f){
     const isElearning=f.yt==='U.ELEARNING';
     const ytRaw=isElearning?U.ELEARNING:f.yt;
@@ -576,17 +585,25 @@ function openImageLightbox(src, alt){
     const likeNames=Array.isArray(f.likeName)?f.likeName.filter(Boolean):[];
     const topics=Array.isArray(f.topics)?f.topics:[];
     const ytStr=String(ytRaw||'').trim();
-    const ytId=!isElearning?ytIdFromAny(ytStr):'';
-    const isVideoFile=isVideoFileLike(ytStr);
+    const rawCaption=f.caption||'';
+    const courseLink=elearningCourseUrlFrom(f,rawCaption,ytStr);
+    const isCourseCard=!!courseLink;
+    const courseThumb=isCourseCard?elearningImageFrom(f,rawCaption):'';
+    const ytId=!isElearning&&!isCourseCard?ytIdFromAny(ytStr):'';
+    const isVideoFile=!isCourseCard&&isVideoFileLike(ytStr);
     const isHttp=ytStr.startsWith('http');
     const isLinkOnly=isHttp&&!ytId&&!isVideoFile;
-    const video=ytId?`<div class="video-wrapper"><iframe src="${U.YT_EMBED(ytId)}" allowfullscreen></iframe></div>`:(isVideoFile?`<div class="video-wrapper"><video controls playsinline src="${esc(ytStr)}"></video></div>`:'');
-    const rawCaption=f.caption||'';
+    const video=isCourseCard?`<div class="video-wrapper course-video-wrapper" data-course-link="${esc(courseLink)}"><div class="yt-lazy course-lazy" data-course-link="${esc(courseLink)}" role="button" tabindex="0" aria-label="開啟課程連結"><img loading="lazy" src="${esc(courseThumb)}" alt=""><div class="yt-play"><i class="uil uil-play"></i></div></div></div>`:(ytId?`<div class="video-wrapper"><iframe src="${U.YT_EMBED(ytId)}" allowfullscreen></iframe></div>`:(isVideoFile?`<div class="video-wrapper"><video controls playsinline src="${esc(ytStr)}"></video></div>`:''));
     const plainCaption=stripHtml(rawCaption);
-    const isTruncated=plainCaption.length>160;
+    const hasCaptionMedia=/<img\b/i.test(String(rawCaption||''));
+    const speakableCaption=ttsCleanDisplayText(plainCaption);
+    const courseCaptionHtml=isCourseCard?buildElearningCourseCaption(f,courseLink):'';
+    const isTruncated=!courseCaptionHtml&&plainCaption.length>160;
     let captionRenderHtml='';
-    const needPlayer=plainCaption.length>0;
-    if(isTruncated){
+    const needPlayer=!!(speakableCaption.length||hasCaptionMedia||String(f.title||'').trim().length);
+    if(courseCaptionHtml){
+      captionRenderHtml=courseCaptionHtml;
+    }else if(isTruncated){
       const previewText=plainCaption.slice(0,160)+'…';
       captionRenderHtml=`<span class="caption-preview">${esc(previewText)}</span> <button type="button" class="caption-more btn btn-outline" data-action="expand-caption">顯示更多</button>`;
     }else{
@@ -622,7 +639,9 @@ function openImageLightbox(src, alt){
     const commentsPanel=commentCount>0?`<div class="feed-comments" style="display:none;font-size:.8rem;border-top:1px dashed var(--c-border);margin-top:.25rem;">${(Array.isArray(f.commentList)?f.commentList:[]).map(renderCommentItem).join('')}</div>`:`<div class="feed-comments" style="display:none;font-size:.8rem;margin-top:.25rem;color:var(--c-text-soft);">無留言</div>`;
     const titleText=String(f.title||'').replace(/\s*•\s*$/,'').trim();
     const smallText=titleText?`${esc(titleText)} • ${esc(f.date)}`:`${esc(f.date)}`;
-    return`<div class="feed fade-slide" data-ts="${f.ts||''}"><div class="feed-header"><div class="avatar"><img src="${f.avatar}" alt=""></div><div class="info"><h3>${esc(f.user)}</h3><small>${smallText}</small></div>${mediaPlayer}<div class="actions">${linkBtn}</div></div>${topicsHtml}${metaLike}${video}<div class="caption">${captionRenderHtml}</div><div class="feed-actions"><div class="left">${likeBtn}<span class="comment-btn" data-action="comment"><i class="uil uil-comment"></i>${commentCountBadge}</span><span class="share-btn" data-action="share"><i class="uil uil-share"></i>${shareCountBadge}</span></div><div class="right"><span class="bookmark-btn${f.bookmarked?' is-bookmarked':''}" data-action="bookmark"><i class="uil uil-bookmark"></i></span></div></div>${commentsPanel}</div>`
+    const feedClass=`feed fade-slide${courseCaptionHtml?' feed-ai-collapsed':''}`;
+    const bodyHtml=courseCaptionHtml?`<div class="feed-ai-main">${video}<div class="caption">${captionRenderHtml}</div></div>`:`${video}<div class="caption">${captionRenderHtml}</div>`;
+    return`<div class="${feedClass}" data-ts="${f.ts||''}"><div class="feed-header"><div class="avatar"><img src="${f.avatar}" alt=""></div><div class="info"><h3>${esc(f.user)}</h3><small>${smallText}</small></div>${mediaPlayer}<div class="actions">${linkBtn}</div></div>${topicsHtml}${metaLike}${bodyHtml}<div class="feed-actions"><div class="left">${likeBtn}<span class="comment-btn" data-action="comment"><i class="uil uil-comment"></i>${commentCountBadge}</span><span class="share-btn" data-action="share"><i class="uil uil-share"></i>${shareCountBadge}</span></div><div class="right"><span class="bookmark-btn${f.bookmarked?' is-bookmarked':''}" data-action="bookmark"><i class="uil uil-bookmark"></i></span></div></div>${commentsPanel}</div>`
   }
   function sortFeedArray(){feedArray.sort((a,b)=>(b.ts||0)-(a.ts||0))}
   let feedScrollAnchorTs = null;
@@ -904,7 +923,7 @@ function openImageLightbox(src, alt){
 const html=`
       <div class="feed fade-slide" id="daysCalcFeed">
         <div class="feed-header">
-          <div class="avatar"><img src="${U.ICON('https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9641509.png?v=20260118195244')}" alt=""></div>
+          <div class="avatar"><img src="${U.ICON('https://cdn.jsdelivr.net/gh/cchfm1100/website@main/system/9641509.png')}" alt=""></div>
           <div class="info">
             <h3>計算餘藥及天數</h3>
           </div>
@@ -1196,6 +1215,9 @@ const html=`
         datetime:_safeDatetimeForFile(f),
         caption:String((f&&f.caption)||''),
         yt:(f&&f.yt)!=null?String(f.yt):'',
+        courseLink:(f&&f.courseLink)!=null?String(f.courseLink):'',
+        courseImage:(f&&f.courseImage)!=null?String(f.courseImage):'',
+        slides:Array.isArray(f&&f.slides)?f.slides.filter(Boolean).map(x=>String(x)):[],
         likeList:_toLikeListForFile(f),
         commentList:_toCommentListForFile(f),
         shares:typeof (f&&f.shares)==='number'?f.shares:0,
@@ -1804,7 +1826,7 @@ const html=`
   }
   function initKeyboard(){document.addEventListener('keydown',e=>{if(e.key==='k'&&(e.metaKey||e.ctrlKey)){e.preventDefault();const inp=qs('#globalSearch');if(inp&&inp.offsetParent!==null)inp.focus()}if(e.key==='Escape'){qs('#notifPopup').style.display='none'}})}
   function initDaysCountdown(){updateCountdown();setInterval(updateCountdown,3600000)}
-  function initLinkButtons(){document.addEventListener('click',e=>{const btn=e.target.closest('.link-btn');if(btn){const url=btn.getAttribute('data-link');if(url)window.open(url,'_blank')}})}
+  function initLinkButtons(){document.addEventListener('click',e=>{const course=e.target.closest('.course-lazy');if(course){e.preventDefault();const url=course.getAttribute('data-course-link')||course.closest('.video-wrapper')?.getAttribute('data-course-link');if(url)window.open(url,'_blank','noopener');return;}const btn=e.target.closest('.link-btn');if(btn){const url=btn.getAttribute('data-link');if(url)window.open(url,'_blank','noopener')}});document.addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ')return;const course=e.target.closest('.course-lazy');if(!course)return;e.preventDefault();const url=course.getAttribute('data-course-link')||course.closest('.video-wrapper')?.getAttribute('data-course-link');if(url)window.open(url,'_blank','noopener')})}
   function initFeedMoreMenu(){
     let menu=d.getElementById('feedMoreMenu');
     if(!menu){
@@ -1874,13 +1896,24 @@ const html=`
     overlay.addEventListener('click',e=>{if(e.target===overlay)close()})
   }
   function initNavTopicFilter(){const groupSel=document.querySelector('#topicGroupSelect');const subSel=document.querySelector('#topicSubSelect');const clearBtn=document.querySelector('#clearTopicFilter');if(!groupSel||!subSel||!clearBtn)return;groupSel.innerHTML='<option value="">全部内容</option>'+TOPIC_GROUPS.map(function(g){return'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>'}).join('');function fillSub(gid){const g=TOPIC_GROUPS.find(function(x){return x.id===gid});if(!g){subSel.innerHTML='<option value="">全部專欄</option>';subSel.disabled=true;return}subSel.innerHTML='<option value="">全部專欄</option>'+(g.topics||[]).map(function(t){const raw=String(t||'').trim();if(!raw)return'';const parts=raw.split('::');const label=parts.length>1?parts.slice(1).join('::'):raw;const full=(parts.length>1?raw:(gid?gid+'::'+raw:raw));return'<option value="'+esc(full)+'">'+esc(label)+'</option>'}).join('');subSel.disabled=false}groupSel.addEventListener('change',function(){const gid=groupSel.value||'';if(!gid){fillSub('');setActiveTopicKey('');return}fillSub(gid);subSel.value='';setActiveTopicKey(gid+'::')});subSel.addEventListener('change',function(){const gid=groupSel.value||'';if(!gid){setActiveTopicKey('');return}const v=subSel.value||'';if(!v){setActiveTopicKey(gid+'::');return}const full=v.includes('::')?v:(gid+'::'+v);setActiveTopicKey(full)});clearBtn.addEventListener('click',function(){setActiveTopicKey('');groupSel.value='';fillSub('');subSel.value=''})}
-  const TTSPlayer={currentFeed:null,utterance:null,playing:false,cfg:{wordsPerSecond:2.6,voiceLangsPrefer:['zh-TW','zh-Hant','zh-CN','cmn-Hant','cmn','zh']},cancel(){if(!TTS_SUPPORTED)return;try{speechSynthesis.cancel()}catch(e){}if(this.currentFeed){const mp=this.currentFeed.querySelector('.media-player');if(mp){const icon=mp.querySelector('.mp-play i');if(icon)icon.className='uil uil-play';mp.dataset.state='idle';const prog=mp.querySelector('.mp-progress');if(prog)prog.style.width='0%'}}this.utterance=null;this.currentFeed=null;this.playing=false}};
+  const TTSPlayer={currentFeed:null,utterance:null,playing:false,highlightTimer:null,lastBoundaryAt:0,cfg:{wordsPerSecond:2.6,maxChunkChars:900,voiceLangsPrefer:['zh-TW','zh-Hant','zh-CN','cmn-Hant','cmn','zh']},cancel(){clearTtsHighlightTimer();try{if(TTS_SUPPORTED)speechSynthesis.cancel()}catch(e){}if(this.currentFeed){qsa('.tts-word.reading,.tts-word.pass',this.currentFeed).forEach(w=>w.classList.remove('reading','pass'));const mp=this.currentFeed.querySelector('.media-player');if(mp){const icon=mp.querySelector('.mp-play i');if(icon)icon.className='uil uil-play';mp.dataset.state='idle';const prog=mp.querySelector('.mp-progress');if(prog)prog.style.width='0%'}}this.utterance=null;this.currentFeed=null;this.playing=false;this.lastBoundaryAt=0;}  }; 
   let ttsWarmedUp=false;
   let userVoiceName=localStorage.getItem('ttsVoiceName')||'';
   async function warmupTTS(){if(ttsWarmedUp)return;if(!TTS_SUPPORTED){ttsWarmedUp=true;return}try{try{await getVoicesAsync(2500)}catch(e){}const u=new SpeechSynthesisUtterance('。');u.lang='zh-TW';speechSynthesis.speak(u);speechSynthesis.cancel();ttsWarmedUp=true}catch(e){ttsWarmedUp=true}}
-  function initMediaPlayers(){qsa('.feed').forEach(feed=>{const mp=qs('.media-player',feed);if(!mp)return;if(!TTS_SUPPORTED){const btn=qs('.mp-btn',mp);if(btn){btn.disabled=true;btn.title='此裝置瀏覽器不支援文字朗讀功能'}return}if(!feed._ttsData){prepareCaptionForTTS(feed);setupMediaEvents(feed)}})}
-  function prepareCaptionForTTS(feedEl){const capEl=qs('.caption',feedEl);if(!capEl)return;qsa('.tts-word',feedEl).forEach(s=>s.classList.remove('reading','pass'));const walker=document.createTreeWalker(capEl,NodeFilter.SHOW_TEXT,{acceptNode(node){if(!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});let textNodes=[];while(walker.nextNode())textNodes.push(walker.currentNode);let wordIndex=0;const allWords=[];textNodes.forEach(n=>{const parts=n.nodeValue.split(/(\s+)/);const frag=document.createDocumentFragment();parts.forEach(p=>{if(!p)return;if(/\s+/.test(p)){frag.appendChild(document.createTextNode(p))}else{const span=document.createElement('span');span.className='tts-word';span.textContent=p;span.dataset.w=wordIndex++;frag.appendChild(span);allWords.push(p)}});n.parentNode.replaceChild(frag,n)});const plain=allWords.join(' ');feedEl._ttsData={words:allWords,totalWords:allWords.length,plainText:plain,estimatedDuration:allWords.length/TTSPlayer.cfg.wordsPerSecond,startWordOffset:0,elapsedSec:0,startedAt:0,currentWordIndex:0,resumeFromWord:0}}
-  function setupMediaEvents(feed){const mp=qs('.media-player',feed);if(!mp)return;mp.addEventListener('click',async e=>{const btn=e.target.closest('[data-action]');if(!btn)return;const action=btn.dataset.action;if(action==='play'){await togglePlay(feed)}else if(action==='seek'){seekFromClick(feed,e)}})}
+  function clearTtsHighlightTimer(){if(TTSPlayer.highlightTimer){clearInterval(TTSPlayer.highlightTimer);TTSPlayer.highlightTimer=null}}
+  function ttsIsSrtIndexLine(s){return /^\d{1,5}$/.test(String(s||'').trim())}
+  function ttsIsSrtTimingLine(s){return /^\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}/.test(String(s||'').trim())}
+  function ttsIsUrlText(s){s=String(s||'').trim();return /^(https?:\/\/|www\.)/i.test(s)||/^[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(s)}
+  function ttsCleanDisplayText(text){return String(text||'').replace(/\r/g,'\n').split('\n').map(line=>line.trim()).filter(line=>line&&!ttsIsSrtIndexLine(line)&&!ttsIsSrtTimingLine(line)).map(line=>line.replace(/https?:\/\/\S+/ig,'').replace(/\s+/g,' ').trim()).filter(Boolean).join('\n').trim()}
+  function ttsShouldSkipNode(node){const el=node&&node.parentElement;if(!el)return true;return !!el.closest('button,.caption-more,.caption-slideshow,.post-images,script,style,noscript,iframe,video,audio,svg,canvas,.media-player,.feed-actions,.feed-comments')}
+  function ttsSplitSpeakableToken(token){let t=String(token||'').trim();if(!t||ttsIsUrlText(t)||/^[-–—>]+$/.test(t))return[];t=t.replace(/\s+/g,' ');if(/[\u3400-\u9fff]/.test(t)&&Array.from(t).length>14){const chunks=[];let buf='';Array.from(t).forEach(ch=>{buf+=ch;if(/[，。！？；、,.!?;:：]/.test(ch)||Array.from(buf).length>=14){chunks.push(buf);buf=''}});if(buf)chunks.push(buf);return chunks.filter(Boolean)}return[t]}
+  function ttsAppendSpeakableText(frag,text,idxRef,allWords){String(text||'').split(/(https?:\/\/[^\s<>"]+)/ig).forEach(piece=>{if(!piece)return;if(/^https?:\/\//i.test(piece)){frag.appendChild(document.createTextNode(piece));return}piece.split(/(\s+)/).forEach(p=>{if(!p)return;if(/\s+/.test(p)){frag.appendChild(document.createTextNode(p));return}const sub=ttsSplitSpeakableToken(p);if(!sub.length){frag.appendChild(document.createTextNode(p));return}sub.forEach(part=>{const span=document.createElement('span');span.className='tts-word';span.textContent=part;span.dataset.w=idxRef.value++;frag.appendChild(span);allWords.push(part)})})})}
+  function ttsBuildFragmentFromText(text,idxRef,allWords){const frag=document.createDocumentFragment();String(text||'').split(/(\r\n|\n|\r)/).forEach(part=>{if(!part)return;if(/^(\r\n|\n|\r)$/.test(part)){frag.appendChild(document.createTextNode(part));return}const trimmed=part.trim();if(!trimmed){frag.appendChild(document.createTextNode(part));return}if(ttsIsSrtIndexLine(trimmed)||ttsIsSrtTimingLine(trimmed)){frag.appendChild(document.createTextNode(part));return}ttsAppendSpeakableText(frag,part,idxRef,allWords)});return frag}
+  function unwrapTtsWords(root){if(!root)return;qsa('.tts-word',root).forEach(s=>{s.replaceWith(document.createTextNode(s.textContent||''))});try{root.normalize()}catch(e){}}
+  function ttsEstimateDuration(words){const text=(words||[]).join('');const chars=Array.from(text).length;return Math.max(1.2,chars/4.5,(words||[]).length/Math.max(1,TTSPlayer.cfg.wordsPerSecond))}
+  function initMediaPlayers(){qsa('.feed').forEach(feed=>{const mp=qs('.media-player',feed);if(!mp)return;if(!TTS_SUPPORTED){const btn=qs('.mp-btn',mp);if(btn){btn.disabled=true;btn.title='此裝置瀏覽器不支援文字朗讀功能'}return}if(!feed._ttsEventsBound){setupMediaEvents(feed);feed._ttsEventsBound=true}if(!feed._ttsData)prepareCaptionForTTS(feed)})}
+  function prepareCaptionForTTS(feedEl){const capEl=qs('.caption',feedEl);if(!capEl)return false;unwrapTtsWords(capEl);const walker=document.createTreeWalker(capEl,NodeFilter.SHOW_TEXT,{acceptNode(node){if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;if(ttsShouldSkipNode(node))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});let textNodes=[];while(walker.nextNode())textNodes.push(walker.currentNode);let idxRef={value:0};const allWords=[];textNodes.forEach(n=>{const frag=ttsBuildFragmentFromText(n.nodeValue,idxRef,allWords);if(n.parentNode)n.parentNode.replaceChild(frag,n)});if(!allWords.length){const item=getFeedItemByElement(feedEl);const fallback=ttsCleanDisplayText((item&&item.title)||stripHtml((item&&item.caption)||''));ttsSplitSpeakableToken(fallback).forEach(w=>allWords.push(w))}const plain=allWords.join(' ');feedEl._ttsData={words:allWords,totalWords:allWords.length,plainText:plain,estimatedDuration:ttsEstimateDuration(allWords),startWordOffset:0,chunkEndWord:0,chunkDuration:0,elapsedSec:0,startedAt:0,currentWordIndex:0,resumeFromWord:0};return allWords.length>0}
+  function setupMediaEvents(feed){const mp=qs('.media-player',feed);if(!mp)return;mp.addEventListener('click',async e=>{const btn=e.target.closest('[data-action]');if(!btn)return;const action=btn.dataset.action;if(action==='play'){await togglePlay(feed)}else if(action==='seek'){await seekFromClick(feed,e)}})}
   function expandIfTruncated(feed){
     const cap=feed?.querySelector('.caption');
     if(!cap) return false;
@@ -1906,20 +1939,23 @@ const html=`
     const playBtn=qs('.mp-play',mp);
     const playIcon=qs('.mp-play i',mp);
     const state=mp.dataset.state||'idle';
-    const data=feed._ttsData;
+    let data=feed._ttsData;
+    if(!data||!data.totalWords){prepareCaptionForTTS(feed);data=feed._ttsData}
+    if(!data||!data.totalWords){mp.dataset.state='idle';if(playIcon)playIcon.className='uil uil-play';return}
     if(TTSPlayer.currentFeed&&TTSPlayer.currentFeed!==feed){TTSPlayer.cancel()}
     if(state==='playing'){
+      TTSPlayer.playing=false;
+      clearTtsHighlightTimer();
       try{speechSynthesis.cancel()}catch(e){}
       mp.dataset.state='paused';
       if(playIcon)playIcon.className='uil uil-play';
       if(playBtn){playBtn.setAttribute('title','播放');playBtn.setAttribute('aria-pressed','false')}
-      TTSPlayer.playing=false;
       return;
     }
     if(state==='paused'&&data&&data.totalWords>0){
-      const startIdx=data.resumeFromWord||0;
-      try{speechSynthesis.cancel()}catch(e){}
-      startReading(feed,startIdx);
+      const startIdx=Math.max(0,Math.min(data.totalWords-1,data.resumeFromWord||data.currentWordIndex||0));
+      const ok=await startReading(feed,startIdx);
+      if(!ok)return;
       mp.dataset.state='playing';
       if(playIcon)playIcon.className='uil uil-pause';
       if(playBtn){playBtn.setAttribute('title','暫停');playBtn.setAttribute('aria-pressed','true')}
@@ -1928,26 +1964,38 @@ const html=`
       return;
     }
     await warmupTTS();
-    try{speechSynthesis.cancel()}catch(e){}
-    startReading(feed,0);
+    const ok=await startReading(feed,0);
+    if(!ok)return;
     mp.dataset.state='playing';
     if(playIcon)playIcon.className='uil uil-pause';
     if(playBtn){playBtn.setAttribute('title','暫停');playBtn.setAttribute('aria-pressed','true')}
   }
-  async function startReading(feed,startWord){
-    if(!TTS_SUPPORTED)return;
-    const data=feed._ttsData;
-    if(!data||data.totalWords===0)return;
+  function ttsMakeChunk(words,startWord){const maxChars=TTSPlayer.cfg.maxChunkChars||900;let end=startWord,chars=0;while(end<words.length){const w=String(words[end]||'');if(end>startWord&&chars+w.length+1>maxChars)break;chars+=w.length+1;end++}if(end<=startWord)end=Math.min(words.length,startWord+1);return{words:words.slice(startWord,end),end}}
+  async function startReading(feed,startWord,opts={}){
+    if(!TTS_SUPPORTED)return false;
+    let data=feed._ttsData;
+    if(!data||!data.totalWords){prepareCaptionForTTS(feed);data=feed._ttsData}
+    if(!data||data.totalWords===0)return false;
     const mp=qs('.media-player',feed);
     const playIcon=qs('.mp-play i',mp);
-    if(TTSPlayer.currentFeed){TTSPlayer.cancel()}
+    const playBtn=qs('.mp-play',mp);
+    if(!opts.continuation){
+      if(TTSPlayer.currentFeed&&TTSPlayer.currentFeed!==feed)TTSPlayer.cancel();
+      else{TTSPlayer.playing=false;clearTtsHighlightTimer();try{speechSynthesis.cancel()}catch(e){}}
+    }
     TTSPlayer.currentFeed=feed;
     TTSPlayer.utterance=null;
-    qsa('.tts-word.reading',feed).forEach(w=>w.classList.remove('reading'));
-    qsa('.tts-word.pass',feed).forEach(w=>w.classList.remove('pass'));
-    data.startWordOffset=startWord||0;
-    const remainingWords=data.words.slice(startWord);
-    const text=remainingWords.join(' ');
+    qsa('.tts-word.reading,.tts-word.pass',feed).forEach(w=>w.classList.remove('reading','pass'));
+    const safeStart=Math.max(0,Math.min(data.totalWords-1,startWord||0));
+    data.startWordOffset=safeStart;
+    const chunk=ttsMakeChunk(data.words,safeStart);
+    const chunkWords=chunk.words;
+    const text=chunkWords.join(' ').trim();
+    if(!text)return false;
+    data.chunkEndWord=chunk.end;
+    data.chunkDuration=ttsEstimateDuration(chunkWords);
+    data.currentWordIndex=safeStart;
+    data.resumeFromWord=safeStart;
     const u=new SpeechSynthesisUtterance(text);
     u.rate=1;
     u.lang='zh-TW';
@@ -1957,35 +2005,42 @@ const html=`
     if(userVoiceName){chosen=voices.find(v=>v.name===userVoiceName)||null}
     if(!chosen){chosen=chooseBestChineseVoice(voices)}
     if(chosen){u.voice=chosen;u.lang=chosen.lang}
-    u.onstart=()=>{data.startedAt=performance.now();data.elapsedSec=0;if(mp)mp.dataset.state='playing';if(playIcon)playIcon.className='uil uil-pause';TTSPlayer.playing=true;requestAnimationFrame(()=>updateProgressLoop(feed))};
-    u.onend=()=>{if(TTSPlayer.currentFeed!==feed)return;if(mp)mp.dataset.state='ended';if(playIcon)playIcon.className='uil uil-play';TTSPlayer.playing=false;updateProgress(feed,1)};
-    u.onerror=()=>{if(mp)mp.dataset.state='idle';if(playIcon)playIcon.className='uil uil-play';TTSPlayer.playing=false};
-    u.onboundary=ev=>{try{const charIndex=ev.charIndex;const relWordIdx=charIndexToWordIndex(remainingWords,charIndex);const absWordIdx=data.startWordOffset+relWordIdx;data.currentWordIndex=absWordIdx;data.resumeFromWord=absWordIdx;highlightWord(feed,absWordIdx);updateProgress(feed,absWordIdx/data.totalWords)}catch(err){}};
-    try{speechSynthesis.speak(u);TTSPlayer.utterance=u}catch(err){if(mp)mp.dataset.state='idle';if(playIcon)playIcon.className='uil uil-play';TTSPlayer.playing=false}
+    u.onstart=()=>{data.startedAt=performance.now();data.elapsedSec=0;if(mp)mp.dataset.state='playing';if(playIcon)playIcon.className='uil uil-pause';if(playBtn){playBtn.setAttribute('title','暫停');playBtn.setAttribute('aria-pressed','true')}TTSPlayer.playing=true;TTSPlayer.lastBoundaryAt=0;highlightWord(feed,safeStart);updateProgress(feed,safeStart/data.totalWords);startTtsHighlightFallback(feed);requestAnimationFrame(()=>updateProgressLoop(feed))};
+    u.onend=()=>{if(TTSPlayer.currentFeed!==feed||!TTSPlayer.playing)return;clearTtsHighlightTimer();data.resumeFromWord=chunk.end;data.currentWordIndex=Math.max(0,chunk.end-1);if(chunk.end<data.totalWords&&mp&&mp.dataset.state==='playing'){startReading(feed,chunk.end,{continuation:true});return}if(mp)mp.dataset.state='ended';if(playIcon)playIcon.className='uil uil-play';if(playBtn){playBtn.setAttribute('title','播放');playBtn.setAttribute('aria-pressed','false')}TTSPlayer.playing=false;highlightWord(feed,data.totalWords-1);updateProgress(feed,1)};
+    u.onerror=()=>{clearTtsHighlightTimer();if(mp)mp.dataset.state='idle';if(playIcon)playIcon.className='uil uil-play';if(playBtn){playBtn.setAttribute('title','播放');playBtn.setAttribute('aria-pressed','false')}TTSPlayer.playing=false};
+    u.onboundary=ev=>{try{if(typeof ev.charIndex!=='number')return;TTSPlayer.lastBoundaryAt=performance.now();const relWordIdx=charIndexToWordIndex(chunkWords,ev.charIndex);const absWordIdx=Math.max(0,Math.min(data.totalWords-1,data.startWordOffset+relWordIdx));data.currentWordIndex=absWordIdx;data.resumeFromWord=absWordIdx;highlightWord(feed,absWordIdx);updateProgress(feed,(absWordIdx+1)/data.totalWords)}catch(err){}};
+    try{speechSynthesis.speak(u);TTSPlayer.utterance=u;return true}catch(err){clearTtsHighlightTimer();if(mp)mp.dataset.state='idle';if(playIcon)playIcon.className='uil uil-play';TTSPlayer.playing=false;return false}
   }
-  function charIndexToWordIndex(words,charIndex){let pos=0;for(let i=0;i<words.length;i++){const w=words[i];const end=pos+w.length;if(charIndex<end+1)return i;pos=end+1}return words.length-1}
-  function highlightWord(feed,idx){qsa('.tts-word.reading',feed).forEach(w=>w.classList.remove('reading'));qsa('.tts-word.pass',feed).forEach(w=>w.classList.remove('pass'));for(let i=0;i<idx;i++){const p=feed.querySelector(`.tts-word[data-w="${i}"]`);if(p)p.classList.add('pass')}const span=feed.querySelector(`.tts-word[data-w="${idx}"]`);if(span)span.classList.add('reading')}
-  function updateProgress(feed,ratio){ratio=Math.max(0,Math.min(1,ratio||0));const mp=qs('.media-player',feed);const prog=qs('.mp-progress',mp);if(prog)prog.style.width=ratio*100+'%'}
-  function updateProgressLoop(feed){if(!TTSPlayer.playing||TTSPlayer.currentFeed!==feed)return;const mp=qs('.media-player',feed);if(mp.dataset.state==='playing'){const data=feed._ttsData;if(data){const now=performance.now();const rel=(now-data.startedAt)/1000;const baseOffsetRatio=data.startWordOffset/data.totalWords;const estRatio=Math.min(1,baseOffsetRatio+rel/data.estimatedDuration);updateProgress(feed,estRatio)}requestAnimationFrame(()=>updateProgressLoop(feed))}}
-  function seekFromClick(feed,e){
+  function startTtsHighlightFallback(feed){clearTtsHighlightTimer();TTSPlayer.highlightTimer=setInterval(()=>{try{if(!TTSPlayer.playing||TTSPlayer.currentFeed!==feed){clearTtsHighlightTimer();return}const mp=qs('.media-player',feed);if(!mp||mp.dataset.state!=='playing'){clearTtsHighlightTimer();return}const data=feed._ttsData;if(!data||!data.totalWords)return;const now=performance.now();if(TTSPlayer.lastBoundaryAt&&now-TTSPlayer.lastBoundaryAt<900)return;const elapsed=(now-(data.startedAt||now))/1000;const span=Math.max(1,(data.chunkEndWord||data.totalWords)-(data.startWordOffset||0));const chunkDur=Math.max(.8,data.chunkDuration||span/TTSPlayer.cfg.wordsPerSecond);let idx=(data.startWordOffset||0)+Math.floor((elapsed/chunkDur)*span);idx=Math.max(0,Math.min((data.chunkEndWord||data.totalWords)-1,data.totalWords-1,idx));if(idx!==data.currentWordIndex){data.currentWordIndex=idx;data.resumeFromWord=idx;highlightWord(feed,idx);updateProgress(feed,(idx+1)/data.totalWords)}}catch(e){}},240)}
+  function charIndexToWordIndex(words,charIndex){let pos=0;for(let i=0;i<words.length;i++){const w=String(words[i]||'');const end=pos+w.length;if(charIndex<end+1)return i;pos=end+1}return Math.max(0,words.length-1)}
+  function highlightWord(feed,idx){const words=qsa('.tts-word',feed);words.forEach(w=>{const i=Number(w.dataset.w);w.classList.toggle('reading',i===idx);w.classList.toggle('pass',i<idx)});const span=feed.querySelector(`.tts-word[data-w="${idx}"]`);if(span&&span.scrollIntoView){const r=span.getBoundingClientRect();if(r.top<80||r.bottom>window.innerHeight-80){try{span.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})}catch(e){}}}}
+  function updateProgress(feed,ratio){ratio=Math.max(0,Math.min(1,ratio||0));const mp=qs('.media-player',feed);const prog=mp?qs('.mp-progress',mp):null;if(prog)prog.style.width=ratio*100+'%'}
+  function updateProgressLoop(feed){if(!TTSPlayer.playing||TTSPlayer.currentFeed!==feed)return;const mp=qs('.media-player',feed);if(mp&&mp.dataset.state==='playing'){const data=feed._ttsData;if(data&&data.totalWords){const now=performance.now();const rel=(now-data.startedAt)/1000;const span=Math.max(1,(data.chunkEndWord||data.totalWords)-(data.startWordOffset||0));const chunkDur=Math.max(.8,data.chunkDuration||span/TTSPlayer.cfg.wordsPerSecond);const estWords=Math.min(span,(rel/chunkDur)*span);updateProgress(feed,((data.startWordOffset||0)+estWords)/data.totalWords)}requestAnimationFrame(()=>updateProgressLoop(feed))}}
+  async function seekFromClick(feed,e){
+    expandIfTruncated(feed);
     const bar=e.target.closest('.mp-timeline');
     if(!bar||!TTS_SUPPORTED)return;
     const rect=bar.getBoundingClientRect();
     const x=e.clientX-rect.left;
-    const ratio=x/rect.width;
-    const data=feed._ttsData;
+    const ratio=Math.max(0,Math.min(1,x/rect.width));
+    let data=feed._ttsData;
+    if(!data||!data.totalWords){prepareCaptionForTTS(feed);data=feed._ttsData}
     if(!data||!data.totalWords)return;
-    const targetWord=Math.floor(ratio*data.totalWords);
+    const targetWord=Math.max(0,Math.min(data.totalWords-1,Math.floor(ratio*data.totalWords)));
     const mp=qs('.media-player',feed);
-    const wasPlaying=mp.dataset.state==='playing';
-    startReading(feed,targetWord);
+    const wasPlaying=mp&&mp.dataset.state==='playing';
+    data.resumeFromWord=targetWord;
+    data.currentWordIndex=targetWord;
+    highlightWord(feed,targetWord);
+    updateProgress(feed,targetWord/data.totalWords);
     if(!wasPlaying){
-      try{speechSynthesis.pause()}catch(e){}
-      mp.dataset.state='paused';
+      if(mp)mp.dataset.state='paused';
       const icon=qs('.mp-play i',mp);
       if(icon)icon.className='uil uil-play';
       TTSPlayer.playing=false;
+      return;
     }
+    await startReading(feed,targetWord);
   }
   function getVoicesAsync(timeout=3000){return new Promise((resolve,reject)=>{if(!TTS_SUPPORTED){resolve([]);return}const existing=speechSynthesis.getVoices();if(existing.length)return resolve(existing);let done=false;const onChange=()=>{if(done)return;const v=speechSynthesis.getVoices();if(v.length){done=true;speechSynthesis.removeEventListener('voiceschanged',onChange);resolve(v)}};speechSynthesis.addEventListener('voiceschanged',onChange);setTimeout(()=>{if(!done){done=true;speechSynthesis.removeEventListener('voiceschanged',onChange);const v=speechSynthesis.getVoices();if(v.length)resolve(v);else reject(new Error('No voices loaded'))}},timeout)})}
   function chooseBestChineseVoice(voices){
@@ -2018,10 +2073,16 @@ const html=`
   }
   function getFeedItemByElement(feedEl){
     if(!feedEl)return null;
-    const ts=feedEl.dataset.ts;
+    const ts=String(feedEl.dataset.ts||'').trim();
     if(!ts)return null;
+    const exact=feedArray.find(f=>String(f&&f.ts||'')===ts);
+    if(exact)return exact;
     const num=Number(ts);
-    return feedArray.find(f=>String(f.ts)===String(num))||null
+    if(isFinite(num)){
+      const byNum=feedArray.find(f=>Number(f&&f.ts)===num);
+      if(byNum)return byNum;
+    }
+    return null
   }
   function getCurrentLikeUser(){const name=String((advCurrentUserName||'您')).trim()||'您';const avatar=String((advCurrentUserAvatar||_defaultAvatar()||ADV_USERS['User0000002'].avatar)).trim()||ADV_USERS['User0000002'].avatar;return{name,avatar}}
   function stripHtml(html){const temp=document.createElement('div');temp.innerHTML=html||'';return(temp.textContent||'').trim()}
