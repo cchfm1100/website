@@ -396,9 +396,38 @@ body.osm-list-modal-open{overflow:hidden}
     }catch(e){}
     return [...new Set(out.map(v=>String(v).trim()).filter(Boolean))];
   }
+  function _isLocalGoogleCandidateUrl(u){
+    try{
+      const x=new URL(String(u||''),location.href);
+      const h=String(x.hostname||'').toLowerCase();
+      const lh=String(location.hostname||'').toLowerCase();
+      return h===lh&&(h.indexOf('googleusercontent.com')!==-1||String(x.pathname||'').indexOf('/embeds/')!==-1);
+    }catch(e){return false;}
+  }
+  function _expandAssetCandidates(raw){
+    const out=[];
+    function add(v){
+      v=String(v||'').trim();
+      if(!v) return;
+      try{v=new URL(vUrl(v),location.href).href}catch(e){v=vUrl(v)}
+      if(v&&!out.includes(v)) out.push(v);
+    }
+    try{
+      const fn=(window&&typeof window.cchAssetCandidates==='function')?window.cchAssetCandidates:null;
+      if(fn){
+        const arr=fn(raw);
+        if(Array.isArray(arr)) arr.forEach(add);
+      }
+    }catch(e){}
+    return out;
+  }
   function mapSettingUrlCandidates(file){
     const want=_mapSqliteName(file);
-    let remote='';
+    const raws=[];
+    function addRaw(v){
+      v=String(v||'').trim().replace(/\.(js|json)(\?|#|$)/i,'.sqlite$2');
+      if(v&&!raws.includes(v)) raws.push(v);
+    }
     try{
       const groups=_settingsGroupsForMap();
       for(const block of groups){
@@ -407,26 +436,35 @@ body.osm-list-modal-open{overflow:hidden}
         for(const m of scripts){
           if(!m||typeof m!=='object') continue;
           for(const k of Object.keys(m)){
-            if(_mapSqliteName(k).toLowerCase()===want.toLowerCase()){
-              remote=String(m[k]||'').trim().replace(/\.(js|json)(\?|#|$)/i,'.sqlite$2');
-              break;
+            const v=String(m[k]||'').trim();
+            if(_mapSqliteName(k).toLowerCase()===want.toLowerCase()||_mapSqliteName(v).toLowerCase()===want.toLowerCase()){
+              addRaw(v||k);
+              addRaw(k);
             }
           }
-          if(remote) break;
         }
-        if(remote) break;
       }
     }catch(e){}
-    if(!remote) remote=_cdnUrl(want);
-    const order=_preferCdn()?[remote,want]:[want,remote];
+    addRaw(want);
     const out=[];
-    for(const raw of order){
-      if(!raw) continue;
-      let u=String(raw).trim();
-      try{u=new URL(vUrl(u),location.href).href}catch(e){u=vUrl(u)}
-      if(u&&!out.includes(u)) out.push(u);
+    function addUrl(v){
+      v=String(v||'').trim();
+      if(!v) return;
+      try{v=new URL(vUrl(v),location.href).href}catch(e){v=vUrl(v)}
+      if(v&&!out.includes(v)) out.push(v);
     }
-    return out.length?out:[new URL(vUrl(want),location.href).href];
+    for(const raw of raws){
+      const expanded=_expandAssetCandidates(raw);
+      if(expanded.length){expanded.forEach(addUrl);continue;}
+      if(_isAbsUrl(raw)) addUrl(raw);
+      else if(_preferCdn()){addUrl(_cdnUrl(raw));addUrl(raw);}
+      else{addUrl(raw);addUrl(_cdnUrl(raw));}
+    }
+    let filtered=out;
+    if(_preferCdn()&&!window.__CCH_ALLOW_LOCAL_EMBED_FALLBACK__){
+      filtered=out.filter(u=>!_isLocalGoogleCandidateUrl(u));
+    }
+    return (filtered.length?filtered:out).length?(filtered.length?filtered:out):[new URL(vUrl(want),location.href).href];
   }
   function mapSettingUrl(file){return mapSettingUrlCandidates(file)[0];}
   function rowsFromExec(res){
@@ -532,7 +570,7 @@ body.osm-list-modal-open{overflow:hidden}
     let last=null;
     for(const url of urls){
       try{
-        const worker=await mod.createDbWorker([{from:'inline',config:{serverMode:'full',requestChunkSize:4096,url:url,cacheBust:String(window.version||'')}}],getMapWorkerUrl(),vUrl(MAP_SQLITE_WASM_CDN),Infinity);
+        const worker=await mod.createDbWorker([{from:'inline',config:{serverMode:'full',requestChunkSize:4096,url:url}}],getMapWorkerUrl(),vUrl(MAP_SQLITE_WASM_CDN),Infinity);
         try{await queryMapRows(worker,"SELECT name FROM sqlite_master LIMIT 1");}catch(probeErr){throw probeErr;}
         window.__OSM_SQLITE_MAP_WORKERS__[f]=worker;
         window.__OSM_SQLITE_MAP_WORKER_URLS__[f]=url;
