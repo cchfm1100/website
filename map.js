@@ -355,11 +355,8 @@ body.osm-list-modal-open{overflow:hidden}
   function _mapSqliteName(s){const b=_baseName(s).trim();return b?b.replace(/\.(js|json)$/i,'.sqlite'):'';}
   function _isSqliteName(s){return /\.(sqlite|db|sqlite3)(\?|#|$)/i.test(String(s||''));}
   function _isAbsUrl(s){return /^(https?:)?\/\//i.test(String(s||'')) || /^(data:|blob:)/i.test(String(s||''));}
-  function _cdnBases(){const out=[];const add=v=>{v=String(v||'').trim().replace(/\/+$/,'');if(v&&!out.includes(v))out.push(v)};add(global.CDNurl||global.CDNURL||global.CCH_CDN_PREFIX||global.SQL_CDN_PREFIX||'');try{(global.CCH_CDN_FALLBACKS||[]).forEach(add)}catch(e){}add('https://cdn.jsdelivr.net/gh/cchfm1100/website@main');return out;}
-  function _cdnUrl(file){const base=_cdnBases()[0]||'';return String(base||'').replace(/\/?$/, '/')+String(file||'').replace(/^\//,'');}
-  function _cdnUrlCandidates(file){file=String(file||'').trim();if(!file)return[];if(_isAbsUrl(file))return[vUrl(file)];return _cdnBases().map(base=>vUrl(String(base).replace(/\/+$/,'')+'/'+file.replace(/^\.+\//,'').replace(/^\/+/,'')));}
+  function _cdnUrl(file){const base=global.CDNurl||global.CDNURL||global.CCH_CDN_PREFIX||global.SQL_CDN_PREFIX||'';return String(base||'').replace(/\/?$/, '/')+String(file||'').replace(/^\//,'');}
   function _preferCdn(){try{return (typeof cchPreferCdnAssets==='function'&&cchPreferCdnAssets())||!!window.__CCH_CDN_FIRST__;}catch(e){return false;}}
-  function _isLocalGoogleUrl(u){try{const x=new URL(String(u||''),location.href),h=String(x.hostname||'').toLowerCase(),lh=String(location.hostname||'').toLowerCase();return h===lh&&(h.includes('googleusercontent.com')||String(x.pathname||'').includes('/embeds/'))}catch(e){return false}}
   function _isGeoCodeFileName(s){return _baseName(s).toLowerCase()==='geocode.sqlite';}
   function _isMapDataKey(k){
     const b=_baseName(k).toLowerCase();
@@ -420,16 +417,15 @@ body.osm-list-modal-open{overflow:hidden}
         if(remote) break;
       }
     }catch(e){}
-    const remotes=_cdnUrlCandidates(remote||want);
-    const order=_preferCdn()?remotes.concat([want]):[want].concat(remotes);
-    let out=[];
+    if(!remote) remote=_cdnUrl(want);
+    const order=_preferCdn()?[remote,want]:[want,remote];
+    const out=[];
     for(const raw of order){
       if(!raw) continue;
       let u=String(raw).trim();
       try{u=new URL(vUrl(u),location.href).href}catch(e){u=vUrl(u)}
       if(u&&!out.includes(u)) out.push(u);
     }
-    if(_preferCdn()&&!window.__CCH_ALLOW_LOCAL_EMBED_FALLBACK__)out=out.filter(u=>!_isLocalGoogleUrl(u));
     return out.length?out:[new URL(vUrl(want),location.href).href];
   }
   function mapSettingUrl(file){return mapSettingUrlCandidates(file)[0];}
