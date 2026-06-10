@@ -361,6 +361,14 @@ body.osm-list-modal-open{overflow:hidden}
   function _mapSqliteName(s){const b=_baseName(s).trim();return b?b.replace(/\.(js|json)$/i,'.sqlite'):'';}
   function _isSqliteName(s){return /\.(sqlite|db|sqlite3)(\?|#|$)/i.test(String(s||''));}
   function _isAbsUrl(s){return /^(https?:)?\/\//i.test(String(s||'')) || /^(data:|blob:)/i.test(String(s||''));}
+  function _isLocalGoogleUrl(u){
+    try{
+      const x=new URL(String(u||''),location.href);
+      const h=String(x.hostname||'').toLowerCase();
+      const lh=String(location.hostname||'').toLowerCase();
+      return h===lh&&(h.indexOf('googleusercontent.com')!==-1||String(x.pathname||'').indexOf('/embeds/')!==-1);
+    }catch(e){return false;}
+  }
   function _cdnUrl(file){
     file=String(file||'').trim().replace(/^\/+/, '');
     const g=(typeof window!=='undefined'&&window)?window:((typeof globalThis!=='undefined'&&globalThis)?globalThis:{});
@@ -434,7 +442,8 @@ body.osm-list-modal-open{overflow:hidden}
     }catch(e){}
     const out=[];
     const add=raw=>_addUniqueUrl(out,raw);
-    const localFirst=window.__OSM_SQLITE_LOCAL_FIRST__!==false;
+    const preferCdn=_preferCdn();
+    const localFirst=(window.__OSM_SQLITE_LOCAL_FIRST__!==false)&&!preferCdn;
     const loadedMap=window.__OSM_SQLITE_MAP_WORKER_URLS__&&window.__OSM_SQLITE_MAP_WORKER_URLS__['map.sqlite'];
     if(_isGeoCodeFileName(want)&&loadedMap) add(_siblingSqliteUrl(loadedMap,want));
     const localCandidates=[want];
@@ -450,12 +459,15 @@ body.osm-list-modal-open{overflow:hidden}
     for(const u of _cdnUrlCandidates(remote||want)) if(u&&remoteCandidates.indexOf(u)<0) remoteCandidates.push(u);
     const ordered=localFirst?localCandidates.concat(remoteCandidates,mapped):remoteCandidates.concat(mapped,localCandidates);
     ordered.forEach(add);
+    let finalOut=out;
+    if(preferCdn&&!window.__CCH_ALLOW_LOCAL_EMBED_FALLBACK__) finalOut=out.filter(u=>!_isLocalGoogleUrl(u));
+    if(!finalOut.length) finalOut=out.length?out:[new URL(want,location.href).href];
     try{
       const st=osmStats();
       st.sqliteCandidates=st.sqliteCandidates||{};
-      st.sqliteCandidates[want]=out.slice();
+      st.sqliteCandidates[want]=finalOut.slice();
     }catch(e){}
-    return out.length?out:[new URL(want,location.href).href];
+    return finalOut;
   }
   function mapSettingUrl(file){return mapSettingUrlCandidates(file)[0];}
   function rowsFromExec(res){
