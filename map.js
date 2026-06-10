@@ -348,14 +348,29 @@ body.osm-list-modal-open{overflow:hidden}
   const MAP_SQLITE_MODULE_URLS=['https://cdn.jsdelivr.net/npm/sql.js-httpvfs@0.8.12/+esm','https://esm.sh/sql.js-httpvfs@0.8.12?bundle'];
   const MAP_SQLITE_WORKER_CDN='https://cdn.jsdelivr.net/npm/sql.js-httpvfs@0.8.12/dist/sqlite.worker.js';
   const MAP_SQLITE_WASM_CDN='https://cdn.jsdelivr.net/npm/sql.js-httpvfs@0.8.12/dist/sql-wasm.wasm';
+  const MAP_SQLJS_CDN='https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js';
+  const MAP_SQLJS_WASM_BASE='https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/';
   window.__OSM_SQLITE_MAP_WORKERS__=window.__OSM_SQLITE_MAP_WORKERS__||{};
   window.__OSM_SQLITE_MAP_WORKER_URLS__=window.__OSM_SQLITE_MAP_WORKER_URLS__||{};
   window.__OSM_SQLITE_MAP_WORKER_URL__=window.__OSM_SQLITE_MAP_WORKER_URL__||'';
+  window.__OSM_SQLITE_FULL_DBS__=window.__OSM_SQLITE_FULL_DBS__||{};
+  window.__OSM_LOAD_STATS__=window.__OSM_LOAD_STATS__||{sqliteFiles:{},errors:[]};
+  function osmStats(){return window.__OSM_LOAD_STATS__||(window.__OSM_LOAD_STATS__={sqliteFiles:{},errors:[]});}
+  function osmErr(label,e){try{const st=osmStats();(st.errors||(st.errors=[])).push({label:String(label||''),message:String(e&&e.message||e||''),time:new Date().toISOString()});}catch(_){}}
   function _baseName(s){return String(s||'').split('/').pop().split('?')[0].split('#')[0];}
   function _mapSqliteName(s){const b=_baseName(s).trim();return b?b.replace(/\.(js|json)$/i,'.sqlite'):'';}
   function _isSqliteName(s){return /\.(sqlite|db|sqlite3)(\?|#|$)/i.test(String(s||''));}
   function _isAbsUrl(s){return /^(https?:)?\/\//i.test(String(s||'')) || /^(data:|blob:)/i.test(String(s||''));}
-  function _cdnUrl(file){const base=global.CDNurl||global.CDNURL||global.CCH_CDN_PREFIX||global.SQL_CDN_PREFIX||'';return String(base||'').replace(/\/?$/, '/')+String(file||'').replace(/^\//,'');}
+  function _cdnUrl(file){
+    file=String(file||'').trim().replace(/^\/+/, '');
+    const g=(typeof window!=='undefined'&&window)?window:((typeof globalThis!=='undefined'&&globalThis)?globalThis:{});
+    const base=String((g.CDNurl||g.CDNURL||'')).trim().replace(/\/+$/, '');
+    return base?(base+'/'+file):file;
+  }
+  function _cdnUrlCandidates(file){file=String(file||'').trim();if(!file)return[];if(_isAbsUrl(file))return[vUrl(file)];return[_cdnUrl(file)];}
+  function _absAssetUrl(raw){let u=String(raw||'').trim();if(!u)return'';try{return new URL(vUrl(u),location.href).href}catch(e){return vUrl(u)}}
+  function _addUniqueUrl(out,raw){const u=_absAssetUrl(raw);if(u&&out.indexOf(u)<0)out.push(u);}
+  function _siblingSqliteUrl(baseUrl,file){try{const u=new URL(String(baseUrl||''),location.href);u.pathname=u.pathname.replace(/[^/]*$/,String(file||'').replace(/^\//,''));u.search='';u.hash='';return u.href;}catch(e){return'';}}
   function _preferCdn(){try{return (typeof cchPreferCdnAssets==='function'&&cchPreferCdnAssets())||!!window.__CCH_CDN_FIRST__;}catch(e){return false;}}
   function _isGeoCodeFileName(s){return _baseName(s).toLowerCase()==='geocode.sqlite';}
   function _isMapDataKey(k){
@@ -417,16 +432,30 @@ body.osm-list-modal-open{overflow:hidden}
         if(remote) break;
       }
     }catch(e){}
-    if(!remote) remote=_cdnUrl(want);
-    const order=_preferCdn()?[remote,want]:[want,remote];
     const out=[];
-    for(const raw of order){
-      if(!raw) continue;
-      let u=String(raw).trim();
-      try{u=new URL(vUrl(u),location.href).href}catch(e){u=vUrl(u)}
-      if(u&&!out.includes(u)) out.push(u);
-    }
-    return out.length?out:[new URL(vUrl(want),location.href).href];
+    const add=raw=>_addUniqueUrl(out,raw);
+    const localFirst=window.__OSM_SQLITE_LOCAL_FIRST__!==false;
+    const loadedMap=window.__OSM_SQLITE_MAP_WORKER_URLS__&&window.__OSM_SQLITE_MAP_WORKER_URLS__['map.sqlite'];
+    if(_isGeoCodeFileName(want)&&loadedMap) add(_siblingSqliteUrl(loadedMap,want));
+    const localCandidates=[want];
+    const mapped=[];
+    try{
+      if(typeof window.cchAssetCandidates==='function'){
+        const arr=window.cchAssetCandidates(remote||want)||[];
+        for(const u of arr) if(u&&mapped.indexOf(u)<0) mapped.push(u);
+      }
+    }catch(e){}
+    const remoteCandidates=[];
+    if(remote&&remote!==want) remoteCandidates.push(remote);
+    for(const u of _cdnUrlCandidates(remote||want)) if(u&&remoteCandidates.indexOf(u)<0) remoteCandidates.push(u);
+    const ordered=localFirst?localCandidates.concat(remoteCandidates,mapped):remoteCandidates.concat(mapped,localCandidates);
+    ordered.forEach(add);
+    try{
+      const st=osmStats();
+      st.sqliteCandidates=st.sqliteCandidates||{};
+      st.sqliteCandidates[want]=out.slice();
+    }catch(e){}
+    return out.length?out:[new URL(want,location.href).href];
   }
   function mapSettingUrl(file){return mapSettingUrlCandidates(file)[0];}
   function rowsFromExec(res){
@@ -455,7 +484,15 @@ body.osm-list-modal-open{overflow:hidden}
     window.__OSM_SQLITE_MAP_WORKER_URL__=URL.createObjectURL(new Blob([body],{type:'text/javascript'}));
     return window.__OSM_SQLITE_MAP_WORKER_URL__;
   }
+  function rowsFromFullSqliteDb(db,sql){
+    const st=db.prepare(sql);
+    const out=[];
+    try{while(st.step()) out.push(st.getAsObject());}
+    finally{try{st.free();}catch(e){}}
+    return out;
+  }
   async function queryMapRows(worker,sql){
+    if(worker&&worker.__fullSqliteDb) return rowsFromFullSqliteDb(worker.__fullSqliteDb,sql);
     if(worker&&worker.db&&typeof worker.db.query==='function'){
       try{return rowsFromExec(await worker.db.query(sql));}catch(e){}
     }
@@ -512,34 +549,93 @@ body.osm-list-modal-open{overflow:hidden}
     if(window.__OSM_GEOCODE_CACHE__) return window.__OSM_GEOCODE_CACHE__;
     const cache=_blankGeoCache();
     let worker=null;
-    try{worker=await getMapSqliteWorker('GeoCode.sqlite');}catch(e){window.__OSM_GEOCODE_CACHE__=cache;return cache;}
+    try{worker=await getMapSqliteWorker('GeoCode.sqlite');}
+    catch(e){
+      osmErr('GeoCode.sqlite load failed',e);
+      try{const st=osmStats();st.geocode=Object.assign(st.geocode||{},{ok:false,error:String(e&&e.message||e)});}catch(_e){}
+      window.__OSM_GEOCODE_CACHE__=cache;
+      return cache;
+    }
+    let total=0;
     async function readTable(table){
       let rows=[];
       try{rows=await queryMapRows(worker,'SELECT GeoCodeID,address,lat,lon FROM '+_qi(table));}
       catch(e){try{rows=await queryMapRows(worker,'SELECT id AS GeoCodeID,address,lat,lon FROM '+_qi(table));}catch(e2){rows=[];}}
+      total+=(rows&&rows.length)||0;
       for(const r of rows||[]) _putGeoCache(cache,r&&r.GeoCodeID,r&&r.address,r&&r.lat,r&&r.lon);
     }
     await readTable('QuickGeo');
     await readTable('GoogleGeo');
     window.__OSM_GEOCODE_CACHE__=cache;
+    try{const st=osmStats();st.geocode={ok:true,url:window.__OSM_SQLITE_MAP_WORKER_URLS__&&window.__OSM_SQLITE_MAP_WORKER_URLS__['GeoCode.sqlite']||'',rows:total,byId:Object.keys(cache.byId||{}).length,byAddress:Object.keys(cache.byAddress||{}).length,center:window.OSM_MAP_DEFAULT_CENTER||null};}catch(_e){}
     return cache;
   }
-  async function getMapSqliteWorker(file){
+  async function ensureMapSqlJs(){
+    if(window.SQL&&window.SQL.Database) return window.SQL;
+    if(window.__OSM_SQLJS_PROMISE__) return window.__OSM_SQLJS_PROMISE__;
+    window.__OSM_SQLJS_PROMISE__=loadScript(MAP_SQLJS_CDN).then(()=>{
+      if(typeof window.initSqlJs!=='function'&&typeof initSqlJs!=='function') throw new Error('initSqlJs missing');
+      const init=(typeof window.initSqlJs==='function')?window.initSqlJs:initSqlJs;
+      return init({locateFile:file=>MAP_SQLJS_WASM_BASE+file});
+    }).then(SQL=>{window.SQL=SQL;return SQL;});
+    return window.__OSM_SQLJS_PROMISE__;
+  }
+  async function fetchMapSqliteBytes(url){
+    const u=vUrl(url);
+    const r=await fetch(u,{cache:'no-store'});
+    if(!r.ok) throw new Error('fetch '+u+' status '+r.status);
+    return new Uint8Array(await r.arrayBuffer());
+  }
+  async function openMapFullSqliteDb(file){
     const f=_mapSqliteName(file);
     if(window.__OSM_SQLITE_MAP_WORKERS__[f]) return window.__OSM_SQLITE_MAP_WORKERS__[f];
-    const mod=await loadMapHttpVfsModule();
+    if(window.__OSM_SQLITE_FULL_DBS__[f]) return window.__OSM_SQLITE_FULL_DBS__[f];
+    const SQL=await ensureMapSqlJs();
     const urls=mapSettingUrlCandidates(f);
     let last=null;
     for(const url of urls){
       try{
-        const worker=await mod.createDbWorker([{from:'inline',config:{serverMode:'full',requestChunkSize:4096,url:url,cacheBust:String(window.version||'')}}],getMapWorkerUrl(),vUrl(MAP_SQLITE_WASM_CDN),Infinity);
-        try{await queryMapRows(worker,"SELECT name FROM sqlite_master LIMIT 1");}catch(probeErr){throw probeErr;}
-        window.__OSM_SQLITE_MAP_WORKERS__[f]=worker;
+        const bytes=await fetchMapSqliteBytes(url);
+        const db=new SQL.Database(bytes);
+        const wrapper={__fullSqliteDb:db,__fullSqliteUrl:url};
+        try{rowsFromFullSqliteDb(db,"SELECT name FROM sqlite_master LIMIT 1");}catch(probeErr){try{db.close();}catch(e){} throw probeErr;}
+        window.__OSM_SQLITE_FULL_DBS__[f]=wrapper;
+        window.__OSM_SQLITE_MAP_WORKERS__[f]=wrapper;
         window.__OSM_SQLITE_MAP_WORKER_URLS__[f]=url;
-        return worker;
+        try{const st=osmStats();st.sqliteFiles[f]=Object.assign(st.sqliteFiles[f]||{},{url,mode:'full-fetch',bytes:bytes&&bytes.byteLength||0,ok:true});}catch(_e){}
+        return wrapper;
+      }catch(e){last=e;try{const st=osmStats();const x=st.sqliteFiles[f]||(st.sqliteFiles[f]={});(x.failures||(x.failures=[])).push({url,message:String(e&&e.message||e)});}catch(_e){}}
+    }
+    osmErr('sqlite full fetch '+f,last);
+    throw last||new Error('full sqlite load failed: '+f);
+  }
+  async function getMapSqliteWorker(file){
+    const f=_mapSqliteName(file);
+    if(window.__OSM_SQLITE_MAP_WORKERS__[f]) return window.__OSM_SQLITE_MAP_WORKERS__[f];
+    let firstErr=null,last=null;
+    if(!window.__OSM_USE_HTTPVFS_SQLITE__){
+      try{return await openMapFullSqliteDb(f);}catch(e){firstErr=e;}
+    }
+    if(!window.__OSM_FORCE_FULLFETCH_SQLITE__){
+      try{
+        const mod=await loadMapHttpVfsModule();
+        const urls=mapSettingUrlCandidates(f);
+        for(const url of urls){
+          try{
+            const worker=await mod.createDbWorker([{from:'inline',config:{serverMode:'full',requestChunkSize:4096,url:url}}],getMapWorkerUrl(),vUrl(MAP_SQLITE_WASM_CDN),Infinity);
+            try{await queryMapRows(worker,"SELECT name FROM sqlite_master LIMIT 1");}catch(probeErr){throw probeErr;}
+            window.__OSM_SQLITE_MAP_WORKERS__[f]=worker;
+            window.__OSM_SQLITE_MAP_WORKER_URLS__[f]=url;
+            try{const st=osmStats();st.sqliteFiles[f]=Object.assign(st.sqliteFiles[f]||{},{url,mode:'httpvfs',ok:true});}catch(_e){}
+            return worker;
+          }catch(e){last=e;try{const st=osmStats();const x=st.sqliteFiles[f]||(st.sqliteFiles[f]={});(x.httpvfsFailures||(x.httpvfsFailures=[])).push({url,message:String(e&&e.message||e)});}catch(_e){}}
+        }
       }catch(e){last=e;}
     }
-    throw last||new Error('map sqlite load failed: '+f);
+    if(window.__OSM_USE_HTTPVFS_SQLITE__){
+      try{return await openMapFullSqliteDb(f);}catch(e){firstErr=firstErr||e;}
+    }
+    throw firstErr||last||new Error('map sqlite load failed: '+f);
   }
   function parseJson(v,def){try{if(v==null||v==='')return def;const x=JSON.parse(String(v));return x==null?def:x;}catch(e){return def;}}
   function rowToPlace(row){
@@ -719,7 +815,8 @@ body.osm-list-modal-open{overflow:hidden}
     let rows=[];
     const tables=await queryMapRows(worker,"SELECT name,type FROM sqlite_master WHERE type IN ('table','view')").catch(()=>[]);
     const names=(tables||[]).map(r=>String(r&&r.name||'')).filter(Boolean);
-    const compact=await loadCompactMapTables(worker,names).catch(()=>[]);
+    const compact=await loadCompactMapTables(worker,names).catch(e=>{osmErr('compact map tables '+f,e);return[];});
+    try{const st=osmStats();st.sqliteFiles[f]=Object.assign(st.sqliteFiles[f]||{},{tables:names.slice(),compactRows:(compact&&compact.length)||0});}catch(_e){}
     if(compact&&compact.length){window.PLACES=compact;return true;}
     let candidates=names.filter(n=>/^(map\d+_places|places|places_all|map_places|place_index|data)$/i.test(n));
     if(!candidates.length) candidates=['places','map_places','place_index','data'];
@@ -743,6 +840,7 @@ body.osm-list-modal-open{overflow:hidden}
     }
     const arr=[];
     for(const r of rows||[]){const p=rowToPlace(r);if(p&&typeof p==='object')arr.push(p);}
+    try{const st=osmStats();st.sqliteFiles[f]=Object.assign(st.sqliteFiles[f]||{},{fallbackRows:arr.length});}catch(_e){}
     window.PLACES=arr;
     return true;
   }
@@ -771,8 +869,12 @@ body.osm-list-modal-open{overflow:hidden}
     try{await loadScript(file);return true;}catch(e){}
     return false;
   }
+  async function waitOsmSettingsReady(){
+    try{if(window.__CCH_SETTINGS_READY__) await Promise.resolve(window.__CCH_SETTINGS_READY__).catch(()=>{});}catch(e){}
+  }
   async function ensurePlaces(){
     if(window.__OSM_PLACES_READY) return;
+    await waitOsmSettingsReady();
     const files=mapDataFilesFromSettings();
     const df=getDataFile();
     if(!files.length && df) files.push(_isSqliteName(df)?_mapSqliteName(df):df);
@@ -786,11 +888,14 @@ body.osm-list-modal-open{overflow:hidden}
       return;
     }
     const datasets={};
+    const st=osmStats();
+    st.placeFiles=files.slice();
     for(const f of files){
       try{window.PLACES=null;}catch(e){}
       const ok=await loadPlacesFile(f);
       if(ok && Array.isArray(window.PLACES)) datasets[f]=window.PLACES.slice();
       else datasets[f]=[];
+      try{(st.datasets||(st.datasets={}))[f]=datasets[f].length;}catch(e){}
     }
     const merged=[];
     for(const f of files){
@@ -805,7 +910,13 @@ body.osm-list-modal-open{overflow:hidden}
     window.OSM_MAP_DATASETS=datasets;
     window.OSM_MAP_DATASET_ORDER=files.slice();
     window.PLACES=merged;
-    window.__OSM_PLACES_READY=true;
+    try{const st=osmStats();st.placesMerged=merged.length;}catch(e){}
+    if(merged.length){
+      window.__OSM_PLACES_READY=true;
+    }else{
+      window.__OSM_PLACES_READY=false;
+      osmErr('places empty',new Error('no OSM places loaded from '+files.join(',')));
+    }
   }
   function defaultCenter(){
     const c=window.OSM_MAP_DEFAULT_CENTER;
@@ -1362,6 +1473,7 @@ body.osm-list-modal-open{overflow:hidden}
     map.on("zoomstart",()=>{if(kicked) return;kicked=true;scheduleInvalidate();});
     const today=ymdToday();
     const norm=flattenPlaces(places||[]).filter(p=>!isExpired(p,today));
+    try{const st=osmStats();st.flatPlaces=norm.length;}catch(e){}
     const files=Array.isArray(window.OSM_MAP_DATASET_ORDER)&&window.OSM_MAP_DATASET_ORDER.length?window.OSM_MAP_DATASET_ORDER.slice():mapDataFilesFromSettings();
     const order=new Map();
     for(let i=0;i<files.length;i++) order.set(String(files[i]||''),i);
@@ -1377,6 +1489,7 @@ body.osm-list-modal-open{overflow:hidden}
       a.push(p);
     }
     const placeKeys=new Set(byCoord.keys());
+    try{const st=osmStats();st.coordPlaces=byCoord.size;st.noCoordPlaces=Math.max(0,norm.length-byCoord.size);}catch(e){}
     const getFeedIdx=()=>window.__OSM_FEED_INDEX__||window.__OSM_FEED_BY_LL__||{};
     const buildAvatarBtn=(meta,count)=>{
       const ts=String(meta&&meta.ts||'').trim();
@@ -1390,6 +1503,8 @@ body.osm-list-modal-open{overflow:hidden}
       const pill=n>1?`<span class="osm-popup-feedcount"><b>${esc(label)}</b></span>`:'';
       return `<button type="button" class="osm-popup-avatar" data-ts="${esc(ts)}"${ttl}>${img}</button>${pill}`;
     };
+    let markerCount=0;
+    const markerErrors=[];
     for(const [k,arr] of byCoord){
       const sp=k.split(',');
       const lat=Number(sp[0]);
@@ -1403,11 +1518,19 @@ body.osm-list-modal-open{overflow:hidden}
         return String(a.name||'').localeCompare(String(b.name||''),'zh-Hant');
       });
       const cat=String((items[0]&&items[0].cat)||'');
-      
-      const m=L.marker([lat,lon],{icon:markerIcon(L,cat,items.length)});
-      m.addTo(group);
-      markerByCoord.set(k,m);
-      m.bindPopup(buildPopupStack(items),{maxWidth:360,closeButton:true,autoPanPadding:[24,24]});
+      let m=null;
+      try{
+        const popupHtml=buildPopupStack(items)||`<div class="osm-popup"><div class="osm-popup-title">${esc((items[0]&&items[0].name)||'優惠')}</div></div>`;
+        m=L.marker([lat,lon],{icon:markerIcon(L,cat,items.length)});
+        m.addTo(group);
+        markerByCoord.set(k,m);
+        m.bindPopup(popupHtml,{maxWidth:360,closeButton:true,autoPanPadding:[24,24]});
+        markerCount++;
+      }catch(e){
+        markerErrors.push({coord:k,message:String(e&&e.message||e),name:String(items[0]&&items[0].name||'')});
+        osmErr('marker '+k,e);
+        continue;
+      }
       m.on('popupopen',()=>{
         try{
           const pop=m.getPopup();
@@ -1442,6 +1565,8 @@ body.osm-list-modal-open{overflow:hidden}
         }catch(e){}
       });
     }
+    try{const st=osmStats();st.markers=markerCount;st.markerErrors=markerErrors.slice(0,20);}catch(e){}
+    if(!markerCount){try{console.warn('[osm] no markers rendered',osmStats());}catch(e){}}
     const fsBtn=document.getElementById('osmMapFullscreenBtn');
     const getLegendEl=()=>{try{return document.getElementById('osmMapLegend')||null;}catch(e){return null;}};
     let prevView=null,fsLock=false;
@@ -1539,9 +1664,11 @@ body.osm-list-modal-open{overflow:hidden}
       await ensurePlaces();
       const places=Array.isArray(window.PLACES)?window.PLACES:[];
       await initMap(window.L,places);
-    }catch(e){}
+    }catch(e){osmErr('initOsmDiscountMap',e);try{console.error('[osm] init failed',e,osmStats());}catch(_e){}}
   };
-  window.ensureOsmPlaces=function(){try{return ensurePlaces();}catch(e){return Promise.resolve([])}};
+  window.ensureOsmPlaces=function(){try{return ensurePlaces();}catch(e){osmErr('ensureOsmPlaces',e);return Promise.resolve([])}};
+  window.osmDebugStats=function(){try{return JSON.parse(JSON.stringify(osmStats()));}catch(e){return osmStats();}};
+  window.osmForceReloadPlaces=function(){try{window.__OSM_PLACES_READY=false;window.__OSM_GEOCODE_CACHE__=null;window.PLACES=null;return ensurePlaces();}catch(e){osmErr('osmForceReloadPlaces',e);return Promise.reject(e);}};
   function setupLazyOsm(){
     try{injectCss();}catch(e){}
     const panel=document.getElementById('app_map');
