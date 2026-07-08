@@ -2253,7 +2253,7 @@ function initCaptionSlideshows(e) {
         const n = e.closest && e.closest(".feed");
         n &&
           n
-            .querySelectorAll(".caption-slideshow-more-btn")
+            .querySelectorAll('.video-more-btn[data-action="caption-slideshow-more"], .caption-slideshow-more-btn')
             .forEach((e) => e.remove());
       },
       u = () => {
@@ -2264,7 +2264,7 @@ function initCaptionSlideshows(e) {
         if (!i) return;
         const r = document.createElement("button");
         ((r.type = "button"),
-          (r.className = "more-btn caption-slideshow-more-btn"),
+          (r.className = "video-more-btn"),
           (r.dataset.action = "caption-slideshow-more"),
           r.setAttribute("aria-expanded", "false"),
           (r.innerHTML = '<i class="uil uil-angle-down"></i> 顯示更多'),
@@ -3186,6 +3186,13 @@ function ytAiOutlineText(e, t = 54) {
   const n = ytAiSegmentText((e && e.summary) || "")[0] || "未命名段落";
   return ytAiTrimText(n, t);
 }
+function ytAiRenderQuizAnswer(e) {
+  const t = ytAiSegmentText(e);
+  const n = t.length ? t : [ytAiTrimText(e, 220)].filter(Boolean);
+  return n.length
+    ? `<ul class="yt-ai-answer-list">${n.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`
+    : "";
+}
 function ytAiRenderFullPanelParts(e) {
   const t = e.segments || [],
     n = ytAiRenderSegments(t, !1),
@@ -3199,12 +3206,12 @@ function ytAiRenderFullPanelParts(e) {
     r = (Array.isArray(e.questions) ? e.questions : [])
       .map(
         (e, t) =>
-          `<details><summary><span>${t + 1}</span>${esc(e.q)}</summary><p>${null != e.seek ? `<button type="button" class="yt-ai-jump" data-ai-seek="${Math.floor(e.seek)}"><i class="uil uil-play"></i> 跳到 ${ytAiFormatTime(e.seek)}</button>` : ""} ${esc(e.a)}</p></details>`,
+          `<details><summary><span>${t + 1}</span>${esc(e.q)}</summary><div class="yt-ai-quiz-answer">${null != e.seek ? `<button type="button" class="yt-ai-jump" data-ai-seek="${Math.floor(e.seek)}"><i class="uil uil-play"></i> 跳到 ${ytAiFormatTime(e.seek)}</button>` : ""}${ytAiRenderQuizAnswer(e.a)}</div></details>`,
       )
       .join("");
   return {
     fullSegments: n,
-    body: `<div class="yt-ai-grid"><div class="yt-ai-card"><h6><i class="uil uil-lightbulb-alt"></i> 學習大綱</h6><ol class="yt-ai-outline">${i}</ol></div><div class="yt-ai-quiz"><h5><i class="uil uil-question-circle"></i> AI模擬練習</h5>${r}</div></div>`,
+    body: `<div class="yt-ai-grid"><div class="yt-ai-quiz"><h5><i class="uil uil-question-circle"></i> AI模擬練習</h5>${r}</div><div class="yt-ai-card"><h5><i class="uil uil-lightbulb-alt"></i> 學習大綱</h5><ol class="yt-ai-outline">${i}</ol></div></div>`,
   };
 }
 function ytAiHydratePanel(e) {
@@ -3231,7 +3238,7 @@ function ytAiRenderCaption(e) {
     n = t.slice(0, Math.min(2, t.length)),
     i = ytAiRenderSegments(n.length ? n : t, !0),
     r = ytAiPanelKey(e);
-  return `<div class="yt-ai-panel" data-ai-caption="1" data-ai-key="${esc(r)}"><div class="yt-ai-section"><h5><i class="uil uil-map"></i> AI整理</h5><div class="yt-ai-segments" data-ai-segments="preview">${i}</div><template data-ai-segments-preview>${i}</template></div><div class="yt-ai-more-body" data-ai-lazy="1"></div></div>`;
+  return `<div class="yt-ai-panel" data-ai-caption="1" data-ai-expandable="1" data-ai-key="${esc(r)}"><div class="yt-ai-section"><h5><i class="uil uil-map"></i> AI整理</h5><div class="yt-ai-segments" data-ai-segments="preview">${i}</div><template data-ai-segments-preview>${i}</template></div><div class="yt-ai-more-body" data-ai-lazy="1"></div></div>`;
 }
 function ytAiCaptionSource(e) {
   return String((e && e.srt) || "") || String((e && e.caption) || "");
@@ -3558,8 +3565,35 @@ function elearningFallbackCaptionHtml(e, t) {
     ? `<div class="caption-beautified elearning-caption">${elearningSectionCardHtml("課程簡介", i)}</div>`
     : "";
 }
-function elearningCaptionPanelHtml(e, t) {
-  return `<div class="yt-ai-panel" data-ai-caption="elearning" data-course-link="${esc(e)}"><div class="yt-ai-section"><h5><i class="uil uil-book-open"></i> 課程簡介</h5><div class="yt-ai-segments" data-ai-segments="preview">${t}</div><template data-ai-segments-preview>${t}</template><template data-ai-segments-full>${t}</template></div></div>`;
+function elearningCaptionPreview(e, t = 180) {
+  const n = String(e || "").trim(),
+    i = captionHtmlToText(n)
+      .replace(/\s+/g, " ")
+      .trim();
+  if (!n || !i || i.length <= t)
+    return { previewHtml: n, fullHtml: n, expandable: !1 };
+  let r = i.slice(0, t).replace(/\s+\S*$/, "").trim();
+  r || (r = i.slice(0, t).trim());
+  let a = "課程簡介";
+  try {
+    const e = document.createElement("div");
+    ((e.innerHTML = n),
+      (a =
+        String(
+          (e.querySelector(".caption-section-title") || {}).textContent || a,
+        )
+          .replace(/\s+/g, " ")
+          .trim() || a));
+  } catch (e) {}
+  return {
+    previewHtml: `<div class="caption-beautified elearning-caption"><div class="caption-section-card elearning-section-card"><div class="caption-section-title">${esc(a)}</div><div class="caption-section-body"><p>${esc(r)}…</p></div></div></div>`,
+    fullHtml: n,
+    expandable: !0,
+  };
+}
+function elearningCaptionPanelHtml(e, t, n = t, i = !1) {
+  const r = i ? ' data-ai-expandable="1"' : "";
+  return `<div class="yt-ai-panel" data-ai-caption="elearning"${r} data-course-link="${esc(e)}"><div class="yt-ai-section"><h5><i class="uil uil-book-open"></i> 課程簡介</h5><div class="yt-ai-segments" data-ai-segments="preview">${t}</div><template data-ai-segments-preview>${t}</template><template data-ai-segments-full>${n}</template></div></div>`;
 }
 function buildElearningCourseCaption(e, t) {
   if (
@@ -3570,9 +3604,14 @@ function buildElearningCourseCaption(e, t) {
   const n = displayFeedTitle(e) || "數位學習課程",
     i = cleanElearningCaptionHtml((e && e.caption) || ""),
     r = beautifyElearningCaptionHtml(i, n) || beautifyCaptionHtml(i);
-  if (r) return elearningCaptionPanelHtml(t, r);
+  if (r) {
+    const e = elearningCaptionPreview(r);
+    return elearningCaptionPanelHtml(t, e.previewHtml, e.fullHtml, e.expandable);
+  }
   const s = elearningFallbackCaptionHtml(elearningPlainText(e), n);
-  return s ? elearningCaptionPanelHtml(t, s) : "";
+  if (!s) return "";
+  const o = elearningCaptionPreview(s);
+  return elearningCaptionPanelHtml(t, o.previewHtml, o.fullHtml, o.expandable);
 }
 function seekFeedVideo(e, t) {
   t = Math.max(0, Math.floor(Number(t) || 0));
@@ -3627,8 +3666,23 @@ function seekFeedVideo(e, t) {
   }
   return !1;
 }
+function layoutVideoLearningSegments(e = document) {
+  qsa(".video-learning-card .yt-ai-segments", e).forEach((e) => {
+    if (e.querySelector(":scope > .video-learning-rest")) return;
+    const t = Array.from(e.children).filter((e) =>
+      e.classList.contains("yt-ai-segment"),
+    );
+    // Course captions use the same panel shell but do not contain video segments.
+    // Leave those captions intact when the panel expands.
+    if (!t.length || (t.length < 3 && e.dataset.aiSegments !== "full")) return;
+    const n = document.createElement("div");
+    n.className = "video-learning-rest";
+    t.slice(1).forEach((e) => n.appendChild(e));
+    e.appendChild(n);
+  });
+}
 function setAiPanelOpen(e, t) {
-  if (!e) return;
+  if (!e || e.dataset.aiExpandable !== "1") return;
   ((t = !!t), t && ytAiHydratePanel(e));
   const n = e.querySelector(".yt-ai-segments");
   if (n) {
@@ -3642,6 +3696,9 @@ function setAiPanelOpen(e, t) {
       (unwrapTtsWords(n), n.replaceChildren(r.content.cloneNode(!0)), (n.dataset.aiSegments = i));
     }
   }
+  try {
+    layoutVideoLearningSegments(e);
+  } catch (e) {}
   e.classList.toggle("is-open", t);
   const i = e.closest(".feed"),
     r =
@@ -3653,6 +3710,14 @@ function setAiPanelOpen(e, t) {
       : '<i class="uil uil-angle-down"></i> 顯示更多'),
     r.setAttribute("aria-expanded", t ? "true" : "false")),
     i && i.classList.toggle("feed-ai-expanded", t));
+  if (i) {
+    try {
+      TTSPlayer.currentFeed === i && TTSPlayer.cancel();
+    } catch (e) {}
+    try {
+      prepareCaptionForTTS(i);
+    } catch (e) {}
+  }
 }
 function initAiYoutubeTools() {
   document.__ytAiToolsBound ||
@@ -3782,6 +3847,100 @@ function displayFeedTitle(e) {
     ? stripDuplicateDateFromTitle(e.title || "", e.datetime || e.date || "")
     : "";
 }
+function elearningCourseCardMeta(e) {
+  const t = String(displayFeedTitle(e) || "數位學習課程")
+    .replace(
+      /^((?:\s*[【\[][^】\]]{1,24}[】\]]\s*)?)(?:(?:\d{4}|1\d{2})[\/.－–—-]\d{1,2}[\/.－–—-]\d{1,2})\s*/,
+      "$1",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+  const n = [],
+    i = [];
+  let r = "",
+    a = 0;
+  for (const e of t) {
+    if ("（([【［".includes(e)) a += 1;
+    else if (")）]】］".includes(e) && a > 0) a -= 1;
+    if (a === 0 && "-－–—".includes(e)) {
+      const e = r.trim();
+      e && n.push(e);
+      r = "";
+    } else r += e;
+  }
+  const s = r.trim();
+  s && n.push(s);
+  const o = n.length ? n : [t];
+  let l = o[o.length - 1] || t,
+    c = o.slice(0, -1);
+  if (/^\d+(?:\.\d+)?\s*學分$/.test(l) && o.length > 1) {
+    ((l = o[o.length - 2] || l), (c = [...o.slice(0, -2), o[o.length - 1]]));
+  }
+  const d = new Set();
+  for (const e of c) {
+    const t = e.replace(/\s+/g, " ").trim();
+    t && !d.has(t) && (d.add(t), i.push(t));
+  }
+  return {
+    fullTitle: t || "數位學習課程",
+    topic: l || t || "數位學習課程",
+    tags: i.slice(0, 4),
+  };
+}
+function elearningCourseCardHtml(e, t, n, i) {
+  const r = elearningCourseCardMeta(e),
+    a = r.tags.length
+      ? `<div class="elearning-course-meta video-learning-meta" aria-label="課程分類">${r.tags
+          .map((e) => {
+            const t = /^\d+$/.test(e) ? "課程代碼 " + e : e;
+            return `<span class="elearning-course-meta-pill">${esc(t)}</span>`;
+          })
+          .join("")}</div>`
+      : "",
+    s = n
+      ? `<div class="elearning-course-summary video-learning-summary">${n}</div>`
+      : "";
+  return `<section class="elearning-course-card video-learning-card" aria-label="數位學習課程預覽"><div class="elearning-course-media video-learning-media">${t}</div><div class="elearning-course-body video-learning-body"><h4 class="elearning-course-title" title="${esc(r.fullTitle)}">${esc(r.topic)}</h4>${a}${s}</div></section>`;
+}
+function youtubeLessonCardMeta(e) {
+  const t = String(displayFeedTitle(e) || "影片課程")
+      .replace(/\s+/g, " ")
+      .trim() || "影片課程";
+  let n = t,
+    i = "",
+    r = [];
+  const a = n.match(/\s*[（(]([^()（）]{1,40})[)）]\s*$/);
+  a && ((i = a[1].trim()), (n = n.slice(0, a.index).trim()));
+  const s = n.match(/^(.*?)\s*(【[^】]+】)\s*(.*)$/);
+  let o = n;
+  s
+    ? ((s[1] && s[1].trim() && r.push(s[1].trim()),
+        s[2] && r.push(s[2].trim()),
+        (o = (s[3] || "").trim() || s[2].replace(/[【】]/g, "").trim())))
+    : n && (o = n);
+  i && r.push("講者 " + i);
+  const l = new Set(),
+    c = [];
+  for (const e of r) {
+    const t = String(e || "").replace(/\s+/g, " ").trim();
+    t && !l.has(t) && (l.add(t), c.push(t));
+  }
+  return {
+    fullTitle: t,
+    topic: o || t || "影片課程",
+    tags: c.slice(0, 3),
+  };
+}
+function youtubeLessonCardHtml(e, t, n) {
+  const r = youtubeLessonCardMeta(e),
+    a = r.tags.length
+      ? `<div class="elearning-course-meta video-learning-meta" aria-label="影片分類">${r.tags
+          .map((e) => `<span class="elearning-course-meta-pill">${esc(e)}</span>`)
+          .join("")}</div>`
+      : "",
+    s = n ? `<div class="elearning-course-summary video-learning-summary">${n}</div>` : "";
+  return `<section class="elearning-course-card video-learning-card" aria-label="影片學習筆記預覽"><div class="elearning-course-media video-learning-media">${t}</div><div class="elearning-course-body video-learning-body"><h4 class="elearning-course-title" title="${esc(r.fullTitle)}">${esc(r.topic)}</h4>${a}${s}</div></section>`;
+}
 function buildFeed(e) {
   const t = "U.ELEARNING" === e.yt,
     n = t ? U.ELEARNING : e.yt,
@@ -3803,7 +3962,7 @@ function buildFeed(e) {
       ("string" == typeof n && String(n).startsWith(U.ELEARNING))
     ),
     h = c
-      ? `<div class="video-wrapper course-video-wrapper" data-course-link="${esc(l)}"><div class="yt-lazy course-lazy" data-course-link="${esc(l)}" role="button" tabindex="0" aria-label="開啟課程連結"><img loading="lazy" src="${esc(d)}" alt=""><div class="yt-play"><i class="uil uil-play"></i></div></div></div>`
+      ? `<div class="video-wrapper course-video-wrapper" data-course-link="${esc(l)}"><div class="yt-lazy course-lazy" data-course-link="${esc(l)}" role="button" tabindex="0" aria-label="開啟課程：${esc(displayFeedTitle(e) || "數位學習課程")}"><img loading="lazy" src="${esc(d)}" alt="${esc(displayFeedTitle(e) || "課程封面")}"><div class="yt-play"><i class="uil uil-play"></i></div></div></div>`
       : u
         ? `<div class="video-wrapper" data-yt-id="${esc(u)}"><div class="yt-lazy" data-yt-id="${esc(u)}" role="button" tabindex="0" aria-label="播放影片"><img loading="lazy" src="https://i.ytimg.com/vi/${u}/hqdefault.jpg" alt=""><div class="yt-play"><i class="uil uil-play"></i></div></div></div>`
         : p
@@ -3814,6 +3973,7 @@ function buildFeed(e) {
     S = ttsCleanDisplayText(y),
     A =
       buildAiYoutubeCaption(e) || (c ? buildElearningCourseCaption(e, l) : ""),
+    aiCanExpand = String(A || "").includes('data-ai-expandable="1"'),
     _ = !!String(e.srt || "").trim(),
     w = !A || _ ? normalizeCaptionMedia(o) : null,
     E = !(!w || !/caption-beautified/.test(w.captionHtml || "")),
@@ -3889,15 +4049,11 @@ function buildFeed(e) {
     W = f
       ? `<span class="link-btn" data-link="${esc(s)}" style="color:white;background:var(--c-primary);display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;cursor:pointer"><i class="uil-youtube"></i></span>`
       : '<button type="button" class="icon-btn feed-more-btn" data-action="feed-more"><i class="uil uil-ellipsis-h"></i></button>',
-    j = A
-      ? '<button type="button" class="more-btn" data-ai-more aria-expanded="false"><i class="uil uil-angle-down"></i> 顯示更多</button>'
-      : "",
     z =
       x > 0
         ? `<div class="feed-comments" style="display:none;font-size:.8rem;border-top:1px dashed var(--c-border);margin-top:.25rem;">${(Array.isArray(e.commentList) ? e.commentList : []).map(renderCommentItem).join("")}</div>`
         : '<div class="feed-comments" style="display:none;font-size:.8rem;margin-top:.25rem;color:var(--c-text-soft);">無留言</div>',
-    G = displayFeedTitle(e),
-    K = G ? `${esc(G)} • ${esc(e.date)}` : `${esc(e.date)}`;
+    K = `${esc(e.date || "")}`;
   let V = "";
   try {
     const t = e && e.geo,
@@ -3918,10 +4074,16 @@ function buildFeed(e) {
         '"></div></div>';
     }
   } catch (e) {}
-  const Q = A
-    ? `<div class="feed-ai-main">${h}<div class="caption">${T}</div></div>${V}`
-    : `${h}${V}<div class="caption">${T}</div>`;
-  return `<div class="${"feed fade-slide" + (A ? " feed-ai-collapsed" : "")}" data-ts="${e.ts || ""}" data-src-file="${esc(e.__srcFile || e.__file || "")}"><div class="feed-header"><div class="avatar"><img src="${e.avatar}" alt=""></div><div class="info"><h3>${esc(e.user)}</h3><small>${K}</small></div>${I}<div class="actions">${W}</div></div>${k}${R}${Q}<div class="feed-actions">${j}<div class="right">${H}<span class="comment-btn" data-action="comment"><i class="uil uil-comment"></i>${$}</span><span class="share-btn" data-action="share"><i class="uil uil-share"></i>${N}</span><span class="bookmark-btn${e.bookmarked ? " is-bookmarked" : ""}" data-action="bookmark"><i class="uil uil-bookmark"></i></span></div></div>${z}</div>`;
+  const Q = c
+      ? `${elearningCourseCardHtml(e, h, T, l)}${V}`
+      : A
+        ? `${youtubeLessonCardHtml(e, h, T)}${V}`
+        : `${h}${V}<div class="caption">${T}</div>`,
+    Y =
+      A && aiCanExpand
+        ? `<button type="button" class="video-more-btn" data-ai-more aria-expanded="false"><i class="uil uil-angle-down"></i> 顯示更多</button>`
+        : "";
+  return `<div class="${"feed fade-slide" + (A ? " feed-ai-collapsed" : "") + (aiCanExpand ? " feed-ai-expandable" : "") + (c ? " elearning-feed video-learning-feed" : A ? " video-learning-feed" : "")}" data-ts="${e.ts || ""}" data-src-file="${esc(e.__srcFile || e.__file || "")}"><div class="feed-header"><div class="avatar"><img src="${e.avatar}" alt=""></div><div class="info"><h3>${esc(e.user)}</h3><small>${K}</small></div>${I}<div class="actions">${W}</div></div>${k}${R}${Q}<div class="feed-actions">${Y}<div class="right">${H}<span class="comment-btn" data-action="comment"><i class="uil uil-comment"></i>${$}</span><span class="share-btn" data-action="share"><i class="uil uil-share"></i>${N}</span><span class="bookmark-btn${e.bookmarked ? " is-bookmarked" : ""}" data-action="bookmark"><i class="uil uil-bookmark"></i></span></div></div>${z}</div>`;
 }
 let mapAdAiCollapsedCount = 0,
   mapAdCursor = 0,
@@ -4862,28 +5024,6 @@ function buildMapAdFeed(e) {
     U = `<div class="map-ad-card">${E}${`<div class="map-ad-body">${`<div class="map-ad-meta"><i class="uil uil-ticket"></i><span>${esc(u)}</span></div>`}${b}${T}</div>`}</div>${L}${C}`;
   return `<div class="feed fade-slide map-ad-feed" data-ts="${esc(x)}" data-map-ad="1" data-map-source="${esc(M)}">${q}<div class="feed-ai-main"><div class="caption map-ad-caption">${U}</div></div></div>`;
 }
-async function isCourseLearningFeed(e) {
-  const t = [
-    e && e.__srcFile,
-    e && e.__file,
-    e && e.__sourceFile,
-    e && e.title,
-    e && e.caption,
-    e && e.srt,
-    Array.isArray(e && e.topics) ? e.topics.join(" ") : "",
-  ]
-    .map((e) => String(e || ""))
-    .join(" ");
-  return (
-    /909092\.(?:sqlite|db|sqlite3)/i.test(t) ||
-    /\bbiostat\b|生物統計學|回歸分析|迴歸分析|ANOVA|Multiple\s+linear\s+regression|Linear\s+Regression|Dummy\s+Variable|Regression\s+with\s+binary|洪弘/i.test(
-      t,
-    )
-  );
-}
-function shouldSuppressMapAdForFeed(e) {
-  return !1 !== window.DISABLE_COURSE_MAP_ADS && isCourseLearningFeed(e);
-}
 async function buildFeedBatchWithMapAds(e) {
   const t = await ensureMapAdPlaces();
   let n = "";
@@ -4891,8 +5031,7 @@ async function buildFeedBatchWithMapAds(e) {
     const e = buildFeed(i);
     if (
       ((n += e),
-      !shouldSuppressMapAdForFeed(i) &&
-        e.indexOf("feed-ai-collapsed") >= 0 &&
+      e.indexOf("feed-ai-collapsed") >= 0 &&
         (mapAdAiCollapsedCount++, mapAdAiCollapsedCount % 4 == 0))
     ) {
       const e = pickMapAdPlace(t);
@@ -8199,17 +8338,19 @@ function initNavTopicFilter() {
       ((e.dataset.boundTopicFilter = "1"),
       e.addEventListener("change", function () {
         const n = e.value || "";
+        closeTopicOverview();
         if (!n) return (r(""), void setActiveTopicKey(""));
         (r(n), (t.value = ""), setActiveTopicKey(n + "::"));
       })),
     t.dataset.boundTopicFilter ||
       ((t.dataset.boundTopicFilter = "1"),
-      t.addEventListener("change", function () {
+      t.addEventListener("change", async function () {
         const n = e.value || "";
-        if (!n) return void setActiveTopicKey("");
-        const i = t.value || "";
-        if (!i) return void setActiveTopicKey(n + "::");
-        setActiveTopicKey(i.includes("::") ? i : n + "::" + i);
+        if (!n) return (closeTopicOverview(), void setActiveTopicKey(""));
+        const i = t.value || "",
+          a = i ? (i.includes("::") ? i : n + "::" + i) : n + "::";
+        await setActiveTopicKey(a);
+        openTopicOverview(a);
       })),
     n.dataset.boundTopicFilter ||
       ((n.dataset.boundTopicFilter = "1"),
@@ -8313,30 +8454,14 @@ function ttsShouldSkipNode(e) {
   return (
     !t ||
     !!t.closest(
-      "button,.more-btn,.caption-slideshow,.post-images,script,style,noscript,template,iframe,video,audio,svg,canvas,.media-player,.feed-actions,.feed-comments,.yt-ai-panel,.yt-ai-transcript",
+      "button,.more-btn,.caption-slideshow,.post-images,script,style,noscript,template,iframe,video,audio,svg,canvas,.media-player,.feed-actions,.feed-comments,.yt-ai-quiz,.yt-ai-transcript",
     )
   );
 }
 function ttsSplitSpeakableToken(e) {
   let t = String(e || "").trim();
   if (!t || ttsIsUrlText(t) || /^[-–—>]+$/.test(t)) return [];
-  if (
-    ((t = t.replace(/\s+/g, " ")),
-    /[\u3400-\u9fff]/.test(t) && Array.from(t).length > 14)
-  ) {
-    const e = [];
-    let n = "";
-    return (
-      Array.from(t).forEach((t) => {
-        ((n += t),
-          (/[，。！？；、,.!?;:：]/.test(t) || Array.from(n).length >= 14) &&
-            (e.push(n), (n = "")));
-      }),
-      n && e.push(n),
-      e.filter(Boolean)
-    );
-  }
-  return [t];
+  return [t.replace(/\s+/g, " ")];
 }
 function ttsAppendSpeakableText(e, t, n, i) {
   String(t || "")
@@ -8382,29 +8507,6 @@ function ttsBuildFragmentFromText(e, t, n) {
     i
   );
 }
-function ttsAppendPlainWords(e, t) {
-  ttsCleanDisplayText(e)
-    .split(/(\s+)/)
-    .forEach((e) => {
-      if (!e || /\s+/.test(e)) return;
-      ttsSplitSpeakableToken(e).forEach((e) => t.push(e));
-    });
-}
-function ttsAppendAiPanelWords(e, t) {
-  qsa(".yt-ai-panel", e).forEach((e) => {
-    const n =
-      e.dataset.aiKey &&
-      window.__YT_AI_PANEL_DATA__ &&
-      window.__YT_AI_PANEL_DATA__[e.dataset.aiKey];
-    if (n && Array.isArray(n.segments) && n.segments.length) {
-      n.segments.forEach((e) => {
-        ytAiSegmentText(e.summary).forEach((e) => ttsAppendPlainWords(e, t));
-      });
-      return;
-    }
-    ttsAppendPlainWords(e.innerText || e.textContent || "", t);
-  });
-}
 function unwrapTtsWords(e) {
   if (e) {
     qsa(".tts-word", e).forEach((e) => {
@@ -8425,6 +8527,9 @@ function ttsEstimateDuration(e) {
   );
 }
 function initMediaPlayers() {
+  try {
+    layoutVideoLearningSegments(document);
+  } catch (e) {}
   qsa(".feed").forEach((e) => {
     const t = qs(".media-player", e);
     if (t) {
@@ -8440,7 +8545,7 @@ function initMediaPlayers() {
   });
 }
 function prepareCaptionForTTS(e) {
-  const t = qs(".caption", e);
+  const t = qs(".caption,.elearning-course-summary", e);
   if (!t) return !1;
   unwrapTtsWords(t);
   const n = document.createTreeWalker(t, NodeFilter.SHOW_TEXT, {
@@ -8455,17 +8560,17 @@ function prepareCaptionForTTS(e) {
   for (; n.nextNode();) i.push(n.currentNode);
   let r = { value: 0 };
   const a = [];
-  (i.forEach((e) => {
-    const t = ttsBuildFragmentFromText(e.nodeValue, r, a);
-    e.parentNode && e.parentNode.replaceChild(t, e);
-  }),
-    ttsAppendAiPanelWords(t, a));
-  if (!a.length) {
+  if (
+    (i.forEach((e) => {
+      const t = ttsBuildFragmentFromText(e.nodeValue, r, a);
+      e.parentNode && e.parentNode.replaceChild(t, e);
+    }),
+    !a.length)
+  ) {
     const t = getFeedItemByElement(e);
-    ttsAppendPlainWords(
-      (t && (t.srt || t.caption || t.title)) || "",
-      a,
-    );
+    ttsSplitSpeakableToken(
+      ttsCleanDisplayText((t && (t.srt || t.title || t.caption)) || ""),
+    ).forEach((e) => a.push(e));
   }
   const s = a.join(" ");
   return (

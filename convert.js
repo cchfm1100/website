@@ -197,20 +197,66 @@
     v = String(v || "").trim();
     return /(?:youtu\.be|youtube\.com|^https?:\/\/)/i.test(v) ? v : "";
   }
-  function renderNoteUserList(box) {
+  function noteUserState(id) {
+    const wanted = String(id || "").trim();
+    const u =
+      findAdvUser(wanted) ||
+      findAdvUser(NOTE_USER_ID) || {
+        id: NOTE_USER_ID,
+        name: "AI整理筆記",
+        avatar: "",
+      };
+    return {
+      id: String(u.id || NOTE_USER_ID).trim() || NOTE_USER_ID,
+      name: String(u.name || u.id || "AI整理筆記").trim(),
+      avatar: String(u.avatar || "").trim(),
+    };
+  }
+  function notePublisherId(box) {
+    const field = box && $("#advNotePublisherId", box);
+    return noteUserState(field && field.value).id;
+  }
+  function setNotePublisherState(box, id) {
+    box = box || $("#advNoteBackdrop");
+    if (!box) return noteUserState(id);
+    const state = noteUserState(id);
+    const list = $("#advNoteUserList", box);
+    if (list) {
+      $all("input[name=advNoteUserPreset]", list).forEach((radio) => {
+        const selected = String(radio.value || "") === state.id;
+        radio.checked = selected;
+        radio.defaultChecked = selected;
+        radio.toggleAttribute("checked", selected);
+        const label = radio.closest("label");
+        if (label) label.classList.toggle("active", selected);
+      });
+    }
+    const pid = $("#advNotePublisherId", box);
+    const img = $("#advNoteAvatarPreview", box);
+    const nameEl = $("#advNoteUserName", box);
+    const hint = $("#advNotePublisherHint", box);
+    if (pid) pid.value = state.id;
+    if (img) {
+      if (state.avatar) img.src = state.avatar;
+      else img.removeAttribute("src");
+    }
+    if (nameEl) nameEl.textContent = state.name;
+    if (hint) hint.textContent = "publisherID: " + state.id;
+    box.dataset.publisherId = state.id;
+    return state;
+  }
+  function renderNoteUserList(box, selectedId) {
     const list = $("#advNoteUserList", box);
     if (!list) return;
-    let cur = NOTE_USER_ID;
-    try {
-      cur = String(advCurrentUserId || NOTE_USER_ID);
-    } catch (e) {}
+    const state = noteUserState(selectedId || notePublisherId(box));
     const rows = noteUserRows();
     list.innerHTML = rows
       .map(
         (u) =>
-          `<label data-id="${h(u.id)}"><input type="radio" name="advNoteUserPreset" value="${h(u.id)}" data-name="${h(u.name || u.id)}" data-avatar="${h(u.avatar || "")}" ${String(u.id) === cur ? "checked" : ""}><img src="${h(u.avatar || "")}" alt="${h(u.name || u.id)}"><span>${h(u.name || u.id)}</span></label>`,
+          `<label data-id="${h(u.id)}"><input type="radio" name="advNoteUserPreset" value="${h(u.id)}" data-name="${h(u.name || u.id)}" data-avatar="${h(u.avatar || "")}" ${String(u.id) === state.id ? "checked" : ""}><img src="${h(u.avatar || "")}" alt="${h(u.name || u.id)}"><span>${h(u.name || u.id)}</span></label>`,
       )
       .join("");
+    setNotePublisherState(box, state.id);
   }
   function setNoteUserListOpen(box, open) {
     box = box || $("#advNoteBackdrop");
@@ -225,42 +271,26 @@
     if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
   }
   function selectedNoteUser(box) {
-    const radio = $(
-      "#advNoteUserList input[name=advNoteUserPreset]:checked",
-      box,
-    );
-    if (radio)
-      return {
-        id: String(radio.value || "").trim(),
-        name: String(radio.dataset.name || radio.value || "").trim(),
-        avatar: String(radio.dataset.avatar || "").trim(),
-      };
-    const u = findAdvUser(NOTE_USER_ID) || {
-      id: NOTE_USER_ID,
-      name: "AI整理筆記",
-      avatar: "",
-    };
-    return { id: u.id, name: u.name || u.id, avatar: u.avatar || "" };
+    box = box || $("#advNoteBackdrop");
+    return noteUserState(notePublisherId(box));
   }
   function applyPublisherToEditor(id, avatarUrl) {
-    id = String(id || "").trim();
-    let u = id ? findAdvUser(id) : null;
-    const name = String((u && u.name) || id || "AI整理筆記");
-    const avatar = String(avatarUrl || (u && u.avatar) || "").trim();
+    const state = noteUserState(id);
+    const avatar = String(avatarUrl || state.avatar || "").trim();
     try {
-      id && (advCurrentUserId = id);
-      name && (advCurrentUserName = name);
-      avatar && (advCurrentUserAvatar = avatar);
+      advCurrentUserId = state.id;
+      advCurrentUserName = state.name;
+      advCurrentUserAvatar = avatar;
     } catch (e) {
       try {
-        window.advCurrentUserId = id;
-        window.advCurrentUserName = name;
+        window.advCurrentUserId = state.id;
+        window.advCurrentUserName = state.name;
         window.advCurrentUserAvatar = avatar;
       } catch (_) {}
     }
     try {
       $all("#advUserList input[name=advUserPreset]").forEach((r) => {
-        r.checked = String(r.value || "") === id;
+        r.checked = String(r.value || "") === state.id;
       });
     } catch (e) {}
     try {
@@ -271,21 +301,22 @@
       const img = $("#advSelectedAvatarImg");
       if (img && avatar) img.src = avatar;
     } catch (e) {}
-    syncNoteAvatarPreview();
+    return state;
   }
   function applyNoteUserFromRadio(radio) {
     if (!radio) return;
-    const id = String(radio.value || "").trim(),
-      avatar = String(radio.dataset.avatar || "").trim();
-    applyPublisherToEditor(id, avatar);
-    setNoteUserListOpen(radio.closest("#advNoteBackdrop"), false);
+    const box = radio.closest("#advNoteBackdrop");
+    const state = setNotePublisherState(box, radio.value);
+    applyPublisherToEditor(state.id, state.avatar);
+    setNoteUserListOpen(box, false);
   }
   function enterNoteMode() {
     try {
       if (typeof showMore === "function") showMore();
     } catch (e) {}
-    const u = findAdvUser(NOTE_USER_ID);
-    if (u) applyPublisherToEditor(NOTE_USER_ID, u.avatar || "");
+    const box = $("#advNoteBackdrop");
+    const state = box ? selectedNoteUser(box) : noteUserState(NOTE_USER_ID);
+    applyPublisherToEditor(state.id, state.avatar);
     window.__CCH_NOTE_MODE_ACTIVE = true;
     const btn = $("#advNoteBtn");
     btn && btn.classList.add("active");
@@ -295,35 +326,10 @@
     const btn = $("#advNoteBtn");
     btn && btn.classList.remove("active");
   }
-  function syncNoteAvatarPreview() {
-    const box = $("#advNoteBackdrop");
+  function syncNoteAvatarPreview(box) {
+    box = box || $("#advNoteBackdrop");
     if (!box) return;
-    const state = selectedNoteUser(box),
-      img = $("#advNoteAvatarPreview", box),
-      src = $("#advSelectedAvatarImg"),
-      avatarField = $("#advNoteAvatarUrl", box),
-      pid = $("#advNotePublisherId", box),
-      nameEl = $("#advNoteUserName", box),
-      hint = $("#advNotePublisherHint", box);
-    let v = "";
-    try {
-      v = String(
-        (src && src.src) || state.avatar || advCurrentUserAvatar || "",
-      );
-    } catch (e) {
-      v = state.avatar || "";
-    }
-    if (img && v) img.src = v;
-    if (nameEl) nameEl.textContent = state.name || state.id || "AI整理筆記";
-    if (hint) hint.textContent = "publisherID: " + (state.id || NOTE_USER_ID);
-    if (pid && !pid.matches(":focus")) pid.value = state.id || NOTE_USER_ID;
-    if (avatarField && !avatarField.matches(":focus")) avatarField.value = v;
-    try {
-      $all("#advNoteUserList label", box).forEach((label) => {
-        const r = label.querySelector("input");
-        label.classList.toggle("active", !!r && r.checked);
-      });
-    } catch (e) {}
+    setNotePublisherState(box, notePublisherId(box));
   }
   function splitTopicText(text) {
     if (Array.isArray(text)) return text.flatMap(splitTopicText);
@@ -701,9 +707,9 @@
     box.className = "adv-note-backdrop hide";
     box.dataset.source = "local";
     box.setAttribute("aria-hidden", "true");
-    box.innerHTML = `<div class="adv-note-dialog" role="dialog" aria-modal="true" aria-labelledby="advNoteTitle"><div class="adv-note-head"><div class="adv-note-title" id="advNoteTitle"><i class="uil uil-notes"></i><div class="adv-note-title-copy"><span>AI筆記整理</span></div></div><button type="button" class="icon-btn adv-note-close" data-note-close="1"><i class="uil uil-times"></i></button></div><div class="adv-note-avatar-row"><button type="button" class="adv-note-selected-user" id="advNoteSelectedUser" aria-expanded="false" aria-controls="advNoteUserList"><img id="advNoteAvatarPreview" alt="筆記發文者"><div><b id="advNoteUserName">AI整理筆記</b></div></button><div class="adv-user-list adv-note-user-list" id="advNoteUserList" aria-hidden="true"></div><input id="advNotePublisherId" type="hidden" value="${NOTE_USER_ID}"><input id="advNoteAvatarUrl" type="hidden" value=""></div><div class="adv-thumb adv-thumb-add adv-thumb-url-row"><input type="text" class="adv-thumb-url-input" placeholder="URL" autocomplete="off" spellcheck="false"><button type="button" class="adv-thumb-upload-btn" title="用 Python 選擇本機檔案" aria-label="用 Python 選擇本機檔案"><i class="uil uil-file-upload"></i></button></div><input id="advNoteFileInput" class="adv-note-file-input" type="file" multiple accept="${VIDEO_ACCEPT}"><div id="advNoteFilesText" class="adv-note-files">尚未選擇檔案</div><details class="adv-note-details adv-note-main-settings" id="advNoteSettings"><summary><span>上傳設定</span><small id="advNoteSettingsHint">存檔位置、日期、分類</small></summary><div class="adv-note-grid"><label class="adv-note-field full"><span>存檔位置</span><div class="adv-note-input-row adv-note-picker-row"><input id="advNoteDbPath" list="feedSourceDatalist" autocomplete="off" spellcheck="false"><button class="adv-note-mini adv-note-icon-mini" id="advNoteDbBrowseBtn" type="button" title="選擇位置" aria-label="選擇位置"><i class="uil uil-folder-open"></i></button></div><input id="advNoteDbPathFile" class="adv-note-file-input" type="file" accept=".sqlite,.db,.sqlite3"></label><label class="adv-note-field"><span>日期</span><input id="advNoteStartDate" type="date"></label><div class="adv-note-topic-picker"><label class="form-stack-label">分類<div class="inline-control-row"><div class="adv-topic-display adv-note-topic-display" id="advNoteTopicDisplay"><span style="font-size:.6rem;color:var(--c-text-soft);letter-spacing:.5px;">(尚未選擇)</span></div><button class="mini-btn-like" id="advNoteAddTopicBtn" type="button">+ 添加</button><button class="mini-btn-clear" id="advNoteClearTopicBtn" title="清空" type="button">清空</button></div></label><textarea id="advNoteTopics" class="adv-note-hidden-source" spellcheck="false"></textarea><div class="adv-topic-list adv-note-topic-list" id="advNoteTopicList"></div></div></div></details><details class="adv-note-details adv-note-advanced-settings"><summary><span>進階參數</span><small>語言、字幕、圖片理解、筆記整理</small></summary><div class="adv-note-estimate-card" id="advNoteEstimate" aria-live="polite"></div><div class="adv-note-grid"><label class="adv-note-field"><span>加速檢查</span><select id="advNotePreflightMode"><option value="step" selected>逐步預掃（建議）</option><option value="off">關閉預掃</option></select></label><label class="adv-note-field"><span>語言</span><select id="advNoteLangPack"><option value="zh|ch" data-language="zh">中文</option><option value="zh|ch" data-language="zh">中文 + English</option><option value="en|en" data-language="en">English</option><option value="ja|japan" data-language="ja">日本語</option><option value="ko|korean" data-language="ko">한국어</option></select></label><label class="adv-note-field"><span>字幕來源</span><select id="advNoteTranscriptSource"><option value="auto">Auto</option><option value="youtube">Youtube</option><option value="whisper">Whisper</option></select></label><label class="adv-note-field"><span>字幕模型</span><select id="advNoteModel"><option value="large">Large</option><option value="medium" selected>Medium</option><option value="small">Small</option><option value="base">Base</option><option value="tiny">Tiny</option></select></label><label class="adv-note-field"><span>Vision模型</span><select id="advNoteVisionModel"><option value="qwen2.5vl:7b" selected>Qwen2.5VL 7B</option><option value="qwen2.5vl:3b">Qwen2.5VL 3B</option><option value="minicpm-v:8b">MiniCPM-V 8B</option><option value="llama3.2-vision:11b">Llama 3.2 Vision 11B</option><option value="off">Off</option></select></label><label class="adv-note-field"><span>Vision 品質</span><select id="advNoteVisionPreset"><option value="maximum">Maximum</option><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></label><label class="adv-note-field"><span>筆記模型</span><select id="advNoteQwenRefine"><option value="qwen3:8b" selected>Qwen3:8b</option><option value="false">Off</option></select><input id="advNoteQwenModel" type="hidden" value="qwen3:8b"></label><label class="adv-note-field"><span>偵錯備份</span><select id="advNoteKeepArtifacts"><option value="true" selected>保留</option><option value="false">刪除</option></select></label></div></details><div class="adv-note-status" id="advNoteStatus"></div><div class="adv-note-actions"><button type="button" class="primary" id="advNoteRunBtn"><i class="uil uil-play"></i> 開始轉檔</button></div></div>`;
+    box.innerHTML = `<div class="adv-note-dialog" role="dialog" aria-modal="true" aria-labelledby="advNoteTitle"><div class="adv-note-head"><div class="adv-note-title" id="advNoteTitle"><i class="uil uil-notes"></i><div class="adv-note-title-copy"><span>AI筆記整理</span></div></div><button type="button" class="icon-btn adv-note-close" data-note-close="1"><i class="uil uil-times"></i></button></div><div class="adv-note-avatar-row"><button type="button" class="adv-note-selected-user" id="advNoteSelectedUser" aria-expanded="false" aria-controls="advNoteUserList"><img id="advNoteAvatarPreview" alt="筆記發文者"><div><b id="advNoteUserName">AI整理筆記</b></div></button><div class="adv-user-list adv-note-user-list" id="advNoteUserList" aria-hidden="true"></div><input id="advNotePublisherId" type="hidden" value="${NOTE_USER_ID}"></div><div class="adv-thumb adv-thumb-add adv-thumb-url-row"><input type="text" class="adv-thumb-url-input" placeholder="URL" autocomplete="off" spellcheck="false"><button type="button" class="adv-thumb-upload-btn" title="用 Python 選擇本機檔案" aria-label="用 Python 選擇本機檔案"><i class="uil uil-file-upload"></i></button></div><input id="advNoteFileInput" class="adv-note-file-input" type="file" multiple accept="${VIDEO_ACCEPT}"><div id="advNoteFilesText" class="adv-note-files">尚未選擇檔案</div><details class="adv-note-details adv-note-main-settings" id="advNoteSettings"><summary><span>上傳設定</span><small id="advNoteSettingsHint">存檔位置、日期、分類</small></summary><div class="adv-note-grid"><label class="adv-note-field full"><span>存檔位置</span><div class="adv-note-input-row adv-note-picker-row"><input id="advNoteDbPath" list="feedSourceDatalist" autocomplete="off" spellcheck="false"><button class="adv-note-mini adv-note-icon-mini" id="advNoteDbBrowseBtn" type="button" title="選擇位置" aria-label="選擇位置"><i class="uil uil-folder-open"></i></button></div><input id="advNoteDbPathFile" class="adv-note-file-input" type="file" accept=".sqlite,.db,.sqlite3"></label><label class="adv-note-field"><span>日期</span><input id="advNoteStartDate" type="date"></label><div class="adv-note-topic-picker"><label class="form-stack-label">分類<div class="inline-control-row"><div class="adv-topic-display adv-note-topic-display" id="advNoteTopicDisplay"><span style="font-size:.6rem;color:var(--c-text-soft);letter-spacing:.5px;">(尚未選擇)</span></div><button class="mini-btn-like" id="advNoteAddTopicBtn" type="button">+ 添加</button><button class="mini-btn-clear" id="advNoteClearTopicBtn" title="清空" type="button">清空</button></div></label><textarea id="advNoteTopics" class="adv-note-hidden-source" spellcheck="false"></textarea><div class="adv-topic-list adv-note-topic-list" id="advNoteTopicList"></div></div></div></details><details class="adv-note-details adv-note-advanced-settings"><summary><span>進階參數</span><small>語言、字幕、圖片理解、筆記整理</small></summary><div class="adv-note-estimate-card" id="advNoteEstimate" aria-live="polite"></div><div class="adv-note-grid"><label class="adv-note-field"><span>加速檢查</span><select id="advNotePreflightMode"><option value="step" selected>逐步預掃（建議）</option><option value="off">關閉預掃</option></select></label><label class="adv-note-field"><span>語言</span><select id="advNoteLangPack"><option value="zh|ch" data-language="zh">中文</option><option value="zh|ch" data-language="zh">中文 + English</option><option value="en|en" data-language="en">English</option><option value="ja|japan" data-language="ja">日本語</option><option value="ko|korean" data-language="ko">한국어</option></select></label><label class="adv-note-field"><span>字幕來源</span><select id="advNoteTranscriptSource"><option value="auto">Auto</option><option value="youtube">Youtube</option><option value="whisper">Whisper</option></select></label><label class="adv-note-field"><span>字幕模型</span><select id="advNoteModel"><option value="large">Large</option><option value="medium" selected>Medium</option><option value="small">Small</option><option value="base">Base</option><option value="tiny">Tiny</option></select></label><label class="adv-note-field"><span>Vision模型</span><select id="advNoteVisionModel"><option value="qwen2.5vl:7b" selected>Qwen2.5VL 7B</option><option value="qwen2.5vl:3b">Qwen2.5VL 3B</option><option value="minicpm-v:8b">MiniCPM-V 8B</option><option value="llama3.2-vision:11b">Llama 3.2 Vision 11B</option><option value="off">Off</option></select></label><label class="adv-note-field"><span>Vision 品質</span><select id="advNoteVisionPreset"><option value="maximum">Maximum</option><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></label><label class="adv-note-field"><span>筆記模型</span><select id="advNoteQwenRefine"><option value="qwen3:8b" selected>Qwen3:8b</option><option value="false">Off</option></select><input id="advNoteQwenModel" type="hidden" value="qwen3:8b"></label><label class="adv-note-field"><span>偵錯備份</span><select id="advNoteKeepArtifacts"><option value="true" selected>保留</option><option value="false">刪除</option></select></label></div></details><div class="adv-note-status" id="advNoteStatus"></div><div class="adv-note-actions"><button type="button" class="primary" id="advNoteRunBtn"><i class="uil uil-play"></i> 開始轉檔</button></div></div>`;
     document.body.appendChild(box);
-    renderNoteUserList(box);
+    renderNoteUserList(box, notePublisherId(box));
     renderNoteTopicList(box);
     box.addEventListener("mousedown", (e) => {
       if (e.target === box) closeNoteDialog();
@@ -869,24 +875,6 @@
         );
       }
       noteUpdateEstimate(box);
-    });
-    $("#advNoteAvatarUrl", box).addEventListener("input", (e) => {
-      const v = String(e.target.value || "").trim();
-      if (v)
-        applyPublisherToEditor(
-          $("#advNotePublisherId", box).value ||
-            selectedNoteUser(box).id ||
-            NOTE_USER_ID,
-          v,
-        );
-    });
-    $("#advNotePublisherId", box).addEventListener("change", (e) => {
-      const id = String(e.target.value || "").trim() || NOTE_USER_ID,
-        u = findAdvUser(id);
-      applyPublisherToEditor(
-        id,
-        $("#advNoteAvatarUrl", box).value || (u && u.avatar) || "",
-      );
     });
     $("#advNoteRunBtn", box).addEventListener("click", noteRunButtonClick);
     document.addEventListener("keydown", (e) => {
@@ -2525,6 +2513,9 @@
       /^(?:slides|vision) progress:\s*\d+\s*\/\s*\d+\s+(https?:\/\/\S+|www\.\S+)/i,
       /^slides\s+(https?:\/\/\S+|www\.\S+):/i,
       /^error\s+(https?:\/\/\S+|www\.\S+)/i,
+      /^source unavailable\s+(https?:\/\/\S+|www\.\S+)/i,
+      /^skip unavailable\s+(https?:\/\/\S+|www\.\S+)/i,
+      /^skipped:\s*(https?:\/\/\S+|www\.\S+)/i,
       /^failed:\s*(https?:\/\/\S+|www\.\S+)/i,
       /^\[youtube\]\s+Extracting URL:\s*(https?:\/\/\S+|www\.\S+)/i,
     ];
@@ -2897,6 +2888,12 @@
       return `開始分析 ${m[1]}：${srcText || stripVisibleSourceFields(noteTextAfterSourcePrefix(line) || m[2])}`;
     if ((m = line.match(/^process\s+(\d+\/\d+)\s*:\s*(.+)$/i)))
       return `開始處理 ${m[1]}：${srcText || stripVisibleSourceFields(noteTextAfterSourcePrefix(line) || m[2])}`;
+    if (srcText && /^source unavailable\b/i.test(line))
+      return `影片目前無法存取，將略過：${srcText}`;
+    if (srcText && /^skip unavailable\b/i.test(line))
+      return `略過無法存取影片：${srcText}`;
+    if (srcText && /^skipped:\s*/i.test(line))
+      return `已略過：${srcText}`;
     if (srcText && /^yt-dlp failed\b/i.test(line))
       return `影片分析失敗：${srcText}`;
     if (srcText && /^error\b/i.test(line)) {
@@ -3014,6 +3011,8 @@
         line,
       )
     )
+      return { kind: "warning", label: "" };
+    if (/^source unavailable\b|^skip unavailable\b|^skipped:\s*/i.test(line))
       return { kind: "warning", label: "" };
     if (
       /ERROR:|ERROR_ROOT|failed|Traceback|Exception|WinError|too long|Long Path|失敗|錯誤|無法|^\s*File\s+["'].*\.py["'],\s*line\s*\d+/i.test(
@@ -3919,15 +3918,9 @@
     el.textContent = `1分鐘影片：預計處理${noteEstimateRangeText(est.min, est.max)}，筆記約 ${est.charsMin}–${est.charsMax} 字`;
   }
   function collectMeta(box) {
-    const u = selectedNoteUser(box),
-      avatar = String(
-        $("#advNoteAvatarUrl", box).value || u.avatar || "",
-      ).trim(),
-      pid =
-        String(
-          $("#advNotePublisherId", box).value || u.id || NOTE_USER_ID,
-        ).trim() || NOTE_USER_ID;
-    applyPublisherToEditor(pid, avatar);
+    const u = setNotePublisherState(box, notePublisherId(box)),
+      pid = u.id;
+    applyPublisherToEditor(pid, u.avatar);
     const lang = languageMeta(box),
       qwenRef = $("#advNoteQwenRefine", box),
       qwenValue =
