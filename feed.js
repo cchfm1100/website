@@ -3595,6 +3595,33 @@ function elearningCaptionPanelHtml(e, t, n = t, i = !1) {
   const r = i ? ' data-ai-expandable="1"' : "";
   return `<div class="yt-ai-panel" data-ai-caption="elearning"${r} data-course-link="${esc(e)}"><div class="yt-ai-section"><h5><i class="uil uil-book-open"></i> 課程簡介</h5><div class="yt-ai-segments" data-ai-segments="preview">${t}</div><template data-ai-segments-preview>${t}</template><template data-ai-segments-full>${n}</template></div></div>`;
 }
+function elearningCompactText(e) {
+  return String(e || "")
+    .replace(/課程簡介[:：]?/g, "")
+    .replace(/課程摘要[:：]?/g, "")
+    .replace(/摘要內容[:：]?/g, "")
+    .replace(/摘要[:：]?/g, "")
+    .replace(/講師[:：]?/g, "")
+    .replace(/附件[:：]?/g, "")
+    .replace(/[\s\u00a0]+/g, "")
+    .replace(/[，。；：、,.!?！？()（）【】"'「」『』《》〈〉\[\]{}<>_\-－–—|｜/\\]/g, "")
+    .trim();
+}
+function elearningLowInfoText(e, t) {
+  const n = elearningCompactText(t),
+    i = elearningCompactText(e);
+  if (!n) return !0;
+  if (n.length < 12) return !0;
+  if (/^(課程\d*|第?\d+季|\d+年度|1\d{2}年度|\d{4}年度)+$/.test(n)) return !0;
+  if (i && (n === i || n.includes(i) || i.includes(n))) {
+    const r = n.replace(i, "");
+    if (!r || r.length < 8 || /^(課程\d*|第?\d+季|\d+年度|1\d{2}年度|\d{4}年度)+$/.test(r)) return !0;
+  }
+  return !1;
+}
+function elearningCaptionIsLowInfo(e, t) {
+  return elearningLowInfoText(e, captionHtmlToText(t));
+}
 function buildElearningCourseCaption(e, t) {
   if (
     !(t =
@@ -3604,12 +3631,12 @@ function buildElearningCourseCaption(e, t) {
   const n = displayFeedTitle(e) || "數位學習課程",
     i = cleanElearningCaptionHtml((e && e.caption) || ""),
     r = beautifyElearningCaptionHtml(i, n) || beautifyCaptionHtml(i);
-  if (r) {
+  if (r && !elearningCaptionIsLowInfo(n, r)) {
     const e = elearningCaptionPreview(r);
     return elearningCaptionPanelHtml(t, e.previewHtml, e.fullHtml, e.expandable);
   }
   const s = elearningFallbackCaptionHtml(elearningPlainText(e), n);
-  if (!s) return "";
+  if (!s || elearningCaptionIsLowInfo(n, s)) return "";
   const o = elearningCaptionPreview(s);
   return elearningCaptionPanelHtml(t, o.previewHtml, o.fullHtml, o.expandable);
 }
@@ -3975,7 +4002,7 @@ function buildFeed(e) {
       buildAiYoutubeCaption(e) || (c ? buildElearningCourseCaption(e, l) : ""),
     aiCanExpand = String(A || "").includes('data-ai-expandable="1"'),
     _ = !!String(e.srt || "").trim(),
-    w = !A || _ ? normalizeCaptionMedia(o) : null,
+    w = !A || _ ? (c && !A ? null : normalizeCaptionMedia(o)) : null,
     E = !(!w || !/caption-beautified/.test(w.captionHtml || "")),
     b = !A && !E && y.length > 160;
   let T = "";
@@ -3984,9 +4011,10 @@ function buildFeed(e) {
     const e = w || normalizeCaptionMedia(o);
     T = (e.captionHtml || "") + (e.imagesHtml || "") + A;
   } else if (A) T = A;
-  else if (b) {
+  else if (!c && b) {
     T = `<span class="caption-preview">${esc(y.slice(0, 160) + "…").replace(/\n/g, "<br>")}</span><div class="more-btn-row"><button type="button" class="more-btn" data-action="expand-caption">顯示更多</button></div>`;
-  } else {
+  } else if (c && !A) T = "";
+  else {
     const e = w || normalizeCaptionMedia(o);
     T = (e.captionHtml || "") + (e.imagesHtml || "");
   }
