@@ -1558,6 +1558,8 @@ function initImageLightboxClicks() {
   initImageLightboxClicks());
 const FEED_BATCH_SIZE = 12;
 let feedRenderIndex = 0,
+  feedPlanIndex = 0,
+  feedRenderPlan = [],
   feedInfiniteObserver = null,
   lazyImgObserver = null;
 function loadLazyImage(e) {
@@ -3874,6 +3876,18 @@ function displayFeedTitle(e) {
     ? stripDuplicateDateFromTitle(e.title || "", e.datetime || e.date || "")
     : "";
 }
+function feedCaptionTitleHtml(e, t) {
+  const n = String(displayFeedTitle(e) || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!n) return "";
+  const i = String(ttsCleanDisplayText(stripHtml(t || "")) || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (i && (i === n || i.startsWith(n + " ") || i.startsWith(n + "：") || i.startsWith(n + ":")))
+    return "";
+  return `<div class="feed-content-title">${esc(n)}</div>`;
+}
 function elearningCourseCardMeta(e) {
   const t = String(displayFeedTitle(e) || "數位學習課程")
     .replace(
@@ -4102,11 +4116,12 @@ function buildFeed(e) {
         '"></div></div>';
     }
   } catch (e) {}
-  const Q = c
+  const titleHtml = feedCaptionTitleHtml(e, o),
+    Q = c
       ? `${elearningCourseCardHtml(e, h, T, l)}${V}`
       : A
         ? `${youtubeLessonCardHtml(e, h, T)}${V}`
-        : `${h}${V}<div class="caption">${T}</div>`,
+        : `${h}${V}<div class="caption">${titleHtml}${T}</div>`,
     Y =
       A && aiCanExpand
         ? `<button type="button" class="video-more-btn" data-ai-more aria-expanded="false"><i class="uil uil-angle-down"></i> 顯示更多</button>`
@@ -4117,9 +4132,28 @@ let mapAdAiCollapsedCount = 0,
   mapAdCursor = 0,
   mapAdPlacesCache = null,
   mapAdPlacesPromise = null;
+const MAP_AD_STABLE_CURSOR_KEY = "cchMapAdStableCursorV1";
+function getStableMapAdCursor() {
+  try {
+    const e = Number(sessionStorage.getItem(MAP_AD_STABLE_CURSOR_KEY));
+    if (isFinite(e) && e >= 0) return Math.floor(e);
+    const t = Math.floor(1e6 * Math.random());
+    return (sessionStorage.setItem(MAP_AD_STABLE_CURSOR_KEY, String(t)), t);
+  } catch (e) {
+    return 0;
+  }
+}
+function resetMapAdDeckState(e) {
+  if (!e || !e.__mapAdDeck) return;
+  ((e.sourceCursor = 0), (e.recentKeys = []));
+  Object.keys(e.sources || {}).forEach((t) => {
+    e.sources[t] && (e.sources[t].cursor = 0);
+  });
+}
 function resetMapAdInsertion() {
   ((mapAdAiCollapsedCount = 0),
-    (mapAdCursor = Math.floor(1e6 * Math.random())));
+    (mapAdCursor = getStableMapAdCursor()),
+    resetMapAdDeckState(mapAdPlacesCache));
 }
 function mapAdPlain(e, t) {
   let n = stripHtml(String(e || ""))
@@ -4562,10 +4596,7 @@ function pickMapAdFromDeck(e) {
         break;
       }
     }
-    if (
-      (i.cursor % i.items.length === 0 && (i.items = mapAdShuffle(i.items)), a)
-    )
-      return a;
+    if (a) return a;
   }
   const n = Array.isArray(e.sourceKeys) ? e.sourceKeys : [];
   for (const t of n) {
@@ -5052,21 +5083,60 @@ function buildMapAdFeed(e) {
     U = `<div class="map-ad-card">${E}${`<div class="map-ad-body">${`<div class="map-ad-meta"><i class="uil uil-ticket"></i><span>${esc(u)}</span></div>`}${b}${T}</div>`}</div>${L}${C}`;
   return `<div class="feed fade-slide map-ad-feed" data-ts="${esc(x)}" data-map-ad="1" data-map-source="${esc(M)}">${q}<div class="feed-ai-main"><div class="caption map-ad-caption">${U}</div></div></div>`;
 }
-async function buildFeedBatchWithMapAds(e) {
-  const t = await ensureMapAdPlaces();
-  let n = "";
+function isMapAdEligibleFeed(e) {
+  if (!e) return !1;
+  try {
+    const t = "U.ELEARNING" === e.yt,
+      n = t ? U.ELEARNING : e.yt,
+      i = String(n || "").trim(),
+      r = e.caption || "",
+      a = elearningCourseUrlFrom(e, r, i),
+      s = !!a,
+      o = buildAiYoutubeCaption(e) || (s ? buildElearningCourseCaption(e, a) : "");
+    return !!o;
+  } catch (t) {
+    return !!String(e.srt || "").trim();
+  }
+}
+async function createFeedRenderPlan(e) {
+  const t = await ensureMapAdPlaces(),
+    n = [];
+  resetMapAdInsertion();
   for (const i of e || []) {
-    const e = buildFeed(i);
+    n.push({ kind: "feed", feed: i });
     if (
-      ((n += e),
-      e.indexOf("feed-ai-collapsed") >= 0 &&
-        (mapAdAiCollapsedCount++, mapAdAiCollapsedCount % 4 == 0))
+      isMapAdEligibleFeed(i) &&
+      (mapAdAiCollapsedCount++, mapAdAiCollapsedCount % 4 == 0)
     ) {
       const e = pickMapAdPlace(t);
-      e && (n += buildMapAdFeed(e));
+      e && n.push({ kind: "map-ad", place: e });
     }
   }
   return n;
+}
+function takeNextPlannedFeedBatch(e) {
+  const t = [],
+    n = Math.max(1, Number(e || FEED_BATCH_SIZE) || FEED_BATCH_SIZE);
+  let i = 0;
+  for (; feedPlanIndex < feedRenderPlan.length && i < n; ) {
+    const e = feedRenderPlan[feedPlanIndex++];
+    (t.push(e), "feed" === e.kind && i++);
+  }
+  for (
+    ;
+    feedPlanIndex < feedRenderPlan.length &&
+    "map-ad" === feedRenderPlan[feedPlanIndex].kind;
+
+  )
+    t.push(feedRenderPlan[feedPlanIndex++]);
+  return t;
+}
+function buildPlannedFeedBatchHtml(e) {
+  return (e || [])
+    .map((e) =>
+      "map-ad" === e.kind ? buildMapAdFeed(e.place) : buildFeed(e.feed),
+    )
+    .join("");
 }
 function sortFeedArray() {
   feedArray.sort((e, t) => (t.ts || 0) - (e.ts || 0));
@@ -5078,20 +5148,40 @@ function clearRenderedFeeds() {
     "daysCalcFeed" !== e.id && e.remove();
   });
 }
+function appendFeedBatchHtml(e) {
+  const t = String(e || "");
+  if (!t) return;
+  const n = qs("#feedMasonry"),
+    i = document.createElement("template");
+  i.innerHTML = t;
+  const r = Array.from(i.content.children).filter(
+    (e) => e.classList && e.classList.contains("feed"),
+  );
+  if (n) {
+    if ("function" == typeof window.__feedMasonryAppend)
+      return void window.__feedMasonryAppend(r, !1);
+    const e = document.createDocumentFragment();
+    r.forEach((t) => e.appendChild(t));
+    n.appendChild(e);
+    return;
+  }
+  const a = ensureFeedSentinel();
+  a.parentNode && a.parentNode.insertBefore(i.content, a);
+}
 async function appendNextFeedBatch() {
   if (feedAppending) return 0;
-  if (feedArray.length - feedRenderIndex <= 0)
+  if (feedPlanIndex >= feedRenderPlan.length)
     return (setSentinelVisible(!1), 0);
   feedAppending = !0;
-  const t = feedArray.slice(feedRenderIndex, feedRenderIndex + 12);
-  feedRenderIndex += t.length;
+  const t = takeNextPlannedFeedBatch(FEED_BATCH_SIZE),
+    n = t.filter((e) => "feed" === e.kind).map((e) => e.feed);
+  feedRenderIndex += n.length;
   try {
     "function" == typeof window.__loadSqliteFeedBodies &&
-      (await window.__loadSqliteFeedBodies(t));
-    const e = ensureFeedSentinel(),
-      n = await buildFeedBatchWithMapAds(t);
+      (await window.__loadSqliteFeedBodies(n));
+    const i = buildPlannedFeedBatchHtml(t);
     return (
-      e.insertAdjacentHTML("beforebegin", n),
+      appendFeedBatchHtml(i),
       setupMapAdToggle(),
       setupMapAdSlideshows(document),
       setupMapAdImageFallback(document),
@@ -5101,8 +5191,8 @@ async function appendNextFeedBatch() {
       initLazyImages(document),
       initFeedGeoMaps(document),
       applyAllFilters(),
-      setSentinelVisible(feedRenderIndex < feedArray.length),
-      t.length
+      setSentinelVisible(feedPlanIndex < feedRenderPlan.length),
+      n.length
     );
   } finally {
     feedAppending = !1;
@@ -5116,7 +5206,7 @@ function resetInfiniteFeedObserver() {
         (e) => {
           e.some((e) => e.isIntersecting) && appendNextFeedBatch();
         },
-        { root: null, rootMargin: "900px 0px", threshold: 0 },
+        { root: null, rootMargin: "3000px 0px", threshold: 0 },
       )),
       feedInfiniteObserver.observe(e)));
 }
@@ -5132,8 +5222,9 @@ async function renderAllFeeds() {
   if (
     (clearRenderedFeeds(),
     sortFeedArray(),
-    resetMapAdInsertion(),
+    (feedRenderPlan = await createFeedRenderPlan(feedArray)),
     (feedRenderIndex = 0),
+    (feedPlanIndex = 0),
     setSentinelVisible(!0),
     await appendNextFeedBatch(),
     null != feedScrollAnchorTs)
@@ -8477,19 +8568,52 @@ function ttsCleanDisplayText(e) {
     .join("\n")
     .trim();
 }
+function ttsElementIsHidden(e) {
+  if (!e || 1 !== e.nodeType) return !1;
+  if (e.hidden || "true" === e.getAttribute("aria-hidden")) return !0;
+  if (e.closest("[hidden],[aria-hidden=\"true\"],template")) return !0;
+  try {
+    let t = e;
+    for (; t && 1 === t.nodeType;) {
+      const e = window.getComputedStyle(t);
+      if ("none" === e.display || "hidden" === e.visibility) return !0;
+      if (t.classList && t.classList.contains("feed")) break;
+      t = t.parentElement;
+    }
+  } catch (t) {}
+  return !1;
+}
 function ttsShouldSkipNode(e) {
   const t = e && e.parentElement;
   return (
     !t ||
+    ttsElementIsHidden(t) ||
     !!t.closest(
       "button,.more-btn,.caption-slideshow,.post-images,script,style,noscript,template,iframe,video,audio,svg,canvas,.media-player,.feed-actions,.feed-comments,.yt-ai-quiz,.yt-ai-transcript",
     )
   );
 }
-function ttsSplitSpeakableToken(e) {
-  let t = String(e || "").trim();
+function ttsSegmentSpeakableText(e) {
+  const t = String(e || "").replace(/\s+/g, " ").trim();
   if (!t || ttsIsUrlText(t) || /^[-–—>]+$/.test(t)) return [];
-  return [t.replace(/\s+/g, " ")];
+  try {
+    if ("undefined" != typeof Intl && Intl.Segmenter) {
+      const e = new Intl.Segmenter("zh-TW", { granularity: "word" }),
+        n = [];
+      for (const i of e.segment(t)) {
+        const e = String(i.segment || "");
+        e.trim() && n.push(e);
+      }
+      if (n.length) return n;
+    }
+  } catch (e) {}
+  return (
+    t.match(/[\u3400-\u9fff]|[A-Za-z]+(?:['’-][A-Za-z]+)*|\d+(?:[.,]\d+)*|[^\s]/g) ||
+    []
+  );
+}
+function ttsSplitSpeakableToken(e) {
+  return ttsSegmentSpeakableText(e);
 }
 function ttsAppendSpeakableText(e, t, n, i) {
   String(t || "")
@@ -8572,8 +8696,20 @@ function initMediaPlayers() {
     }
   });
 }
+function ttsCaptionRoot(e) {
+  if (!e) return null;
+  const t = Array.from(
+    e.querySelectorAll(".caption,.elearning-course-summary"),
+  );
+  return (
+    t.find((e) => !ttsElementIsHidden(e) && !e.closest(".map-ad-feed")) ||
+    t.find((e) => !ttsElementIsHidden(e)) ||
+    t[0] ||
+    null
+  );
+}
 function prepareCaptionForTTS(e) {
-  const t = qs(".caption,.elearning-course-summary", e);
+  const t = ttsCaptionRoot(e);
   if (!t) return !1;
   unwrapTtsWords(t);
   const n = document.createTreeWalker(t, NodeFilter.SHOW_TEXT, {
@@ -8713,10 +8849,14 @@ function ttsMakeChunk(e, t) {
     if (i > t && r + a.length + 1 > n) break;
     ((r += a.length + 1), i++);
   }
-  return (
-    i <= t && (i = Math.min(e.length, t + 1)),
-    { words: e.slice(t, i), end: i }
-  );
+  i <= t && (i = Math.min(e.length, t + 1));
+  const a = e.slice(t, i),
+    s = [];
+  let o = 0;
+  a.forEach((e, t) => {
+    (s.push(o), (o += String(e || "").length), t < a.length - 1 && o++);
+  });
+  return { words: a, end: i, text: a.join(" "), charStarts: s };
 }
 async function startReading(e, t, n = {}) {
   if (!TTS_SUPPORTED) return !1;
@@ -8747,7 +8887,7 @@ async function startReading(e, t, n = {}) {
   i.startWordOffset = o;
   const l = ttsMakeChunk(i.words, o),
     c = l.words,
-    d = c.join(" ").trim();
+    d = String(l.text || "").trim();
   if (!d) return !1;
   ((i.chunkEndWord = l.end),
     (i.chunkDuration = ttsEstimateDuration(c)),
@@ -8765,7 +8905,10 @@ async function startReading(e, t, n = {}) {
   (userVoiceName && (m = p.find((e) => e.name === userVoiceName) || null),
     m || (m = chooseBestChineseVoice(p)),
     m && ((u.voice = m), (u.lang = m.lang)));
+  let fStarted = !1;
   const f = () => {
+    if (fStarted) return;
+    fStarted = !0;
     ((i.startedAt = performance.now()),
       (i.elapsedSec = 0),
       r && (r.dataset.state = "playing"),
@@ -8811,7 +8954,7 @@ async function startReading(e, t, n = {}) {
       try {
         if ("number" != typeof t.charIndex) return;
         TTSPlayer.lastBoundaryAt = performance.now();
-        const n = charIndexToWordIndex(c, t.charIndex),
+        const n = charIndexToWordIndex(c, t.charIndex, l.charStarts),
           r = Math.max(0, Math.min(i.totalWords - 1, i.startWordOffset + n));
         ((i.currentWordIndex = r),
           (i.resumeFromWord = r),
@@ -8867,12 +9010,18 @@ function startTtsHighlightFallback(e) {
       } catch (e) {}
     }, 240)));
 }
-function charIndexToWordIndex(e, t) {
-  let n = 0;
-  for (let i = 0; i < e.length; i++) {
-    const a = n + String(e[i] || "").length;
-    if (t < a + 1) return i;
-    n = a + 1;
+function charIndexToWordIndex(e, t, n) {
+  const i = Math.max(0, Number(t) || 0),
+    r = Array.isArray(n) && n.length === e.length ? n : null;
+  if (r) {
+    for (let t = r.length - 1; t >= 0; t--) if (i >= r[t]) return t;
+    return 0;
+  }
+  let a = 0;
+  for (let t = 0; t < e.length; t++) {
+    const n = a + String(e[t] || "").length;
+    if (i < n + 1) return t;
+    a = n + 1;
   }
   return Math.max(0, e.length - 1);
 }
@@ -8887,7 +9036,7 @@ function highlightWord(e, t) {
     if (e.top < 80 || e.bottom > window.innerHeight - 80)
       try {
         i.scrollIntoView({
-          behavior: "smooth",
+          behavior: "auto",
           block: "nearest",
           inline: "nearest",
         });
